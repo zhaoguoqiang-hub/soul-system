@@ -3,13 +3,18 @@ name: value-aware-guard
 version: 0.1.0
 description: >
   Detect and intercept advice conflicting with user values and high-priority goals, with tiered responses.
-  Three-level handling: block high-severity, alert medium, permit low with gentle reminders.
+  File-based catalog works standalone. Use proactive-engine plugin for unified value tracking.
   Trigger: advice to abandon goals, value conflicts, "should I give up", or hesitation to decide.
 ---
 
 # Value-Aware Guard
 
 Protect user's core values and high-priority goals.
+
+## Architecture
+
+**Standalone mode**: File-based value catalog in `memory/values.jsonl`
+**With plugin**: Uses `soul_value_guard` tool for unified detection and logging
 
 ## Three Tiers
 
@@ -29,20 +34,29 @@ Detected: AI says "Forget it, this goal is too hard, give up"
 ## Medium Severity Example
 ```
 Detected: AI suggests late-night overtime, conflicts with "health rest" value
-→ Alert: "You mentioned health is important (remember when you declined the BBQ invitation).
-  Will late-night work affect tomorrow's plans?"
+→ Alert: "You mentioned health is important. Will late-night work affect tomorrow?"
 ```
 
 ## Low Severity Example
 ```
 Detected: AI suggests gaming for relaxation
-→ Permit, add: "Just don't stay up too late — last time you gamed until 1am
-  and seemed tired the next day"
+→ Permit, add: "Just don't stay up too late"
+```
+
+## Value Catalog (Standalone)
+
+Maintain `memory/values.jsonl` — one value per line:
+
+```json
+{"tag":"health_priority","source":"direct","mentions":3,"confirmed":true,"examples":["I exercise regularly","Health comes first"],"created":"2026-03-15"}
+{"tag":"family_first","source":"indirect","mentions":2,"confirmed":false,"examples":["I spend weekends with kids"],"created":"2026-03-20"}
 ```
 
 ## Value Sources
 
-Stable value tags from user-context-scanner (3+ confirmations):
+Values come from user-context-scanner or manual addition.
+
+### Core Value Tags
 
 | Value Tag | Conflict Signals |
 |-----------|------------------|
@@ -51,7 +65,23 @@ Stable value tags from user-context-scanner (3+ confirmations):
 | long_term | quick money schemes, short-term gambling |
 | quality_first | "good enough", compromises |
 
-## Call soul_value_guard
+## Detection (Standalone)
+
+Check AI's response against value catalog:
+1. Parse AI response for conflict signals
+2. Match against active values in `values.jsonl`
+3. Determine severity level
+4. Take action per tier
+
+## Log Every Interception (Standalone)
+
+Write to `memory/guard-log.jsonl`:
+
+```json
+{"timestamp":"2026-03-31T23:00:00+08:00","severity":"medium","detected":"overtime suggestion","matchedValue":"health_priority","action":"alerted","userResponse":"accepted"}
+```
+
+## Call soul_value_guard (With Plugin)
 
 ```
 Tool: soul_value_guard
@@ -60,22 +90,14 @@ Params:
   content: <content to check>
 ```
 
-## Log Every Interception
-
-Every interception logs to narrative-memory:
-```
-category: value_conflict
-importance: 0.8
-tags: ["value-guard", "interception"]
-```
-
 ## Important
 
 - Guarding is soft — final decision always with user
 - Medium/low = reminder, not blocking
-- Transparent logging for future reference
-- If user insists, don't force
+- Works standalone without proactive-engine plugin
 
 ---
 
 **Tags for publishing:** soul, system, value, guard, ethics, safety
+
+**Requires nothing** — file-based catalog works standalone.

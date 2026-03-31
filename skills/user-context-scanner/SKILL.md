@@ -3,7 +3,7 @@ name: user-context-scanner
 version: 0.1.0
 description: >
   Build and maintain dynamic user profiles that evolve through conversation, with three-confirmation upgrade rules.
-  Sync insights to USER.md. Profiles serve understanding, not data collection.
+  Updates USER.md directly. Works standalone or with proactive-engine plugin.
   Trigger: habits, preferences, values, profession, family, or self-descriptions.
 ---
 
@@ -11,12 +11,17 @@ description: >
 
 Let USER.md evolve from static file to living profile.
 
+## Architecture
+
+**Standalone mode**: Writes directly to USER.md
+**With plugin**: Uses `soul_context` tool for unified profile management
+
 ## Three-Confirmation Rule
 
 ```
 1st mention → Potential preference (no guard trigger)
 2nd mention → Initial confirmation (starts influencing)
-3rd mention → Stable value (triggers value guard)
+3rd mention → Stable value (triggers value-guard)
 ```
 
 Why 3 times: Single mentions may be emotional reactions. 3 times = true pattern.
@@ -32,6 +37,27 @@ Why 3 times: Single mentions may be emotional reactions. 3 times = true pattern.
 - 3 consecutive late-night sessions → infer: night owl
 - Repeated discussion of one topic → infer: current focus
 
+## Update Mechanism (Standalone)
+
+When user reveals preference → write directly to USER.md:
+
+```markdown
+## 动态画像 (auto-generated)
+
+### 职业
+- 产品经理 (revealed: 2026-03-31)
+
+### 作息习惯
+- 周末不工作 (mention count: 1/3, needs 2 more to confirm)
+```
+
+### Accumulation Upgrade
+```
+1st → Mark: potential_preference × 1
+2nd → Mark: potential_preference × 2 (initial confirmation)
+3rd → Upgrade to stable value, add to value-guard catalog
+```
+
 ## Value Tag Mapping
 
 | User Says | Value Tag |
@@ -42,22 +68,16 @@ Why 3 times: Single mentions may be emotional reactions. 3 times = true pattern.
 | Quality over compromise | quality_first |
 | Efficiency first | efficiency_first |
 
-**After 3 confirmations**, automatically added to value-guard detection.
+**After 3 confirmations**, add to value-guard catalog.
 
-## Update Mechanism
+## Call soul_context (With Plugin)
 
-### Immediate (Strong Signal)
-User explicitly states preference → write immediately:
 ```
-User: "I don't work weekend mornings"
-→ Mark: rest_hours × 1 (needs 2 more to upgrade)
-```
-
-### Accumulation Upgrade
-```
-1st → Mark: potential_preference × 1
-2nd → Mark: potential_preference × 2 (initial confirmation)
-3rd → Upgrade to stable value, trigger value-guard
+Tool: soul_context
+Action: add or merge
+Params:
+  key: <field name>
+  value: <value>
 ```
 
 ## Profile Fields
@@ -74,23 +94,16 @@ USER.md dynamic fields:
 - taboo/bottom lines (after 3 confirmations)
 ```
 
-## Call soul_context
-
-```
-Tool: soul_context
-Action: add or merge
-Params:
-  key: <field name>
-  value: <value>
-```
-
 ## Important
 
 - User's direct words > AI inference
 - Slow is better than wrong
 - 3 confirmations is protection, not restriction
 - Profiles serve understanding, not data collection
+- Works standalone without proactive-engine plugin
 
 ---
 
 **Tags for publishing:** soul, system, user-profile, context, understanding
+
+**Requires nothing** — writes directly to USER.md, works standalone.

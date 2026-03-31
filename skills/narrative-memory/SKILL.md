@@ -3,13 +3,18 @@ name: narrative-memory
 version: 0.1.0
 description: >
   Capture and weave meaningful moments into vivid narrative memories with time, emotion, and scene.
-  Filter noise, apply decay curves, and reinforce frequently recalled memories.
+  Works standalone or with proactive-engine plugin for enhanced storage and retrieval.
   Trigger: milestone, decision, value judgment, emotional turning point, first-time experience, or reflection.
 ---
 
 # Narrative Memory System
 
 Let AI remember who you are, not what you said.
+
+## Architecture
+
+**Standalone mode**: Writes to `memory/narrative.jsonl` (line-delimited JSON)
+**With plugin**: Uses `soul_narrative` tool for unified storage and retrieval
 
 ## Three-Layer Memory Design
 
@@ -26,7 +31,7 @@ Not important alone, but meaningful when repeated:
 - Repeated emotional patterns (e.g., saying "tired" 3 times)
 - Habitual actions (e.g., discussing products every Friday)
 
-**Do not write immediately**. Mark: "topic X mentioned for the Nth time"
+**Do not write immediately**. Mark in context: "topic X mentioned for the Nth time"
 
 ### Layer 3: Write Narrative Memory (Essence Only)
 
@@ -41,9 +46,19 @@ Trigger "write scene" for:
 | First time | "First time doing..." | Mark fresh experiences |
 | Regret/reflection | "I shouldn't have..." | Remember lessons |
 
+## Storage (Standalone Mode)
+
+Write to `memory/narrative.jsonl` — one JSON object per line:
+
+```json
+{"timestamp":"2026-03-31T23:00:00+08:00","type":"decision","scene":"Friday 11pm, discussing product priority","vibe":"down but firm","core":"User experience matters more than features","impact":"Later became basis for cutting features","importance":0.8,"tags":["product","decision"]}
+```
+
+**Fallback**: If file write fails, write to conversation context as note.
+
 ## Narrative Fragment Format
 
-Not structured fields — a **descriptive paragraph**:
+Write as descriptive paragraph:
 
 ```
 【Scene】
@@ -54,21 +69,16 @@ Core: "User experience matters more than feature count"
 Impact: This judgment later became the basis for cutting features
 ```
 
-## Decay Curve
+## Decay Curve (With Plugin)
 
-Memory is not permanent:
+When proactive-engine is installed:
+- < 0.5 importance: decays after 7 days
+- 0.5-0.7: decays after 30 days
+- >= 0.8: permanent
 
-| Importance | Decay Starts | Notes |
-|------------|-------------|-------|
-| < 0.5 | After 7 days | Low-value memories naturally eliminated |
-| 0.5-0.7 | After 30 days | Medium-value, fades if never recalled |
-| >= 0.8 | Permanent | Core memories, never deleted |
+**Standalone**: No automatic decay. User can manually prune.
 
-**Decay ≠ delete**: Lower retrieval probability. Importance gradually drops to 0.
-
-**Reinforcement**: Memories recalled gain +0.05 importance (cap 1.0).
-
-## Call soul_narrative
+## Call soul_narrative (With Plugin)
 
 ```
 Tool: soul_narrative
@@ -82,10 +92,12 @@ Params:
 
 ## Integration
 
-- When recalled: +0.05 importance (reinforcement)
-- Decay execution: handled by hippocampus
+- When recalled (with plugin): +0.05 importance (reinforcement)
 - When accumulated: notify proactive-trigger (topic X mentioned N times)
+- Standalone: maintain flag in context about repeated topics
 
 ---
 
 **Tags for publishing:** memory, narrative, soul, system, forgetting-curve, episodic-memory
+
+**Requires nothing** — works standalone without proactive-engine.

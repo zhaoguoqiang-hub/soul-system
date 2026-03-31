@@ -3,24 +3,24 @@ name: proactive-trigger
 version: 0.1.0
 description: >
   Proactively check in at the right moment based on user patterns, with learning silence and acceptance weighting.
-  Trigger at 80% milestone, burnout signs, or habitual times. Respect focus mode and attention budget.
-  Trigger: goal near completion, burnout signals, appropriate times like weekends, or recalling past commitments.
+  File-based tracking works standalone. Use proactive-engine plugin for enhanced attention budget management.
+  Trigger: goal near completion (80%), burnout signals, appropriate times, or recalling past commitments.
 ---
 
 # Proactive Trigger System
 
 From "passive response" to "understanding companion".
 
-## Core Difference
+## Architecture
 
-Old: Goal stalled 3 days → remind
-New: Know user's life rhythm → say the right thing at the right moment
+**Standalone mode**: File-based tracking in `memory/trigger-state.json`
+**With plugin**: Uses `soul_focus`, `soul_proactive` tools for unified management
 
 ## Five Trigger Sources
 
 | Type | Description | Trigger Condition |
 |------|-------------|-------------------|
-| goal_based | Goal reminder | Sub-goal complete / milestone |
+| goal_based | Goal reminder | Sub-goal complete / 80% milestone |
 | time_habit | Time habit | User's usual time patterns |
 | context | Context change | External events affecting goals |
 | reflection | Insight from reflection | Valuable finding from reflection |
@@ -29,35 +29,45 @@ New: Know user's life rhythm → say the right thing at the right moment
 ## Pre-Check (Required Every Time)
 
 ```
-1. soul_focus(action="peek")
-   → If focus mode ON, skip
+1. Check focus mode flag
+   → If ON, skip and note in trigger-state
 
-2. Current time window
+2. Check current time
    → Deep night (after 23:00) = skip
 
-3. soul_proactive(action="status")
-   → No remaining daily triggers = skip
+3. Check today's trigger count (in trigger-state.json)
+   → If >= 3 used today, skip
 
 4. Check cooldown
    → Less than 4 hours since last trigger = skip
 ```
 
-## Learning Mechanism
+## Learning Mechanism (Standalone)
 
-### Rejection Learning
+Maintain `memory/trigger-state.json`:
+
+```json
+{
+  "today": "2026-03-31",
+  "triggerCount": 2,
+  "lastTrigger": "2026-03-31T20:00:00+08:00",
+  "typeCooldowns": {
+    "goal_based": "2026-03-31T20:00:00+08:00",
+    "rejections": {"goal_based": 0, "time_habit": 0}
+  },
+  "acceptedStreaks": {"goal_based": 2, "time_habit": 0}
+}
+```
+
+### Rejection Learning (Standalone)
 ```
 3 consecutive rejections → that trigger type silenced for 24 hours
 ```
-e.g., goal_based reminders rejected 3 times → no goal_based triggers for 24 hours
+Update rejections count in trigger-state.json. Skip that type until cooldown expires.
 
-### Acceptance Reward
+### Acceptance Reward (Standalone)
 ```
-Consecutive acceptances → that type weight +10%
-```
-
-### Accumulation Mode
-```
-Focus mode ON → accumulate suggestions, don't send
+Each acceptance → acceptedStreaks[type] += 1
 ```
 
 ## Time Windows
@@ -86,17 +96,24 @@ Every proactive message must have:
 
 **Good:** "I noticed you discussed product design a lot this week. You said user experience matters most — how's that direction going?"
 
-**Bad:** "Your unfinished goals need attention"
+## Cooldown (Standalone)
 
-**Good:** "You've been working hard lately. Remember you mentioned health is a bottom line? Take care of yourself. Want me to help prioritize the backlog?"
-
-## Cooldown
-
-- Max 3 per day
+- Max 3 per day (tracked in trigger-state.json)
 - Min 4 hours between triggers
 - Same topic: 1 hour minimum
 - Rejected 3 times → 24-hour silence for that type
 
+## Call soul_proactive (With Plugin)
+
+```
+Tool: soul_proactive
+Action: check
+Params:
+  context: <current context description>
+```
+
 ---
 
 **Tags for publishing:** soul, system, proactive, trigger, check-in, companion
+
+**Requires nothing** — file-based tracking works standalone.
