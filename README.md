@@ -73,6 +73,19 @@ openclaw plugins dev packages/proactive-engine
 - [ ] 用户控制面板
 - [ ] ClawHub 发布
 
+
+## 哲学理念
+
+Soul系统不追求"像人一样有灵魂"——那是拟人化，是噱头。
+
+Soul追求的是：**一个真正有用的助理**，能够记住重要的事、预判你的需求、在你疲惫时主动分担。
+
+不是机器，不是马屁精。就是一个靠谱的搭档。
+
 ---
+
+## 许可证
+
+MIT License
 
 *Build with ❤️ for a more proactive AI companion*

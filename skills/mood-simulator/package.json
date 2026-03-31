@@ -1,5 +1,5 @@
 {
-  "name": "@soul/skill-mood-simulator",
+  "name": "@soul/mood-simulator",
   "version": "1.0.0",
   "description": "Simulates energy levels and emotional states to influence response tone and proactive behavior.",
   "main": "dist/index.js",

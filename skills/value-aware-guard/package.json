@@ -1,5 +1,5 @@
 {
-  "name": "@soul/skill-value-aware-guard",
+  "name": "@soul/value-aware-guard",
   "version": "1.0.0",
   "description": "Intercepts messages to check for conflicts with user values and goals, preventing harmful actions.",
   "main": "dist/index.js",
