@@ -1,12 +1,9 @@
 ---
 name: mood-simulator
 description: >
-  情绪引擎。让AI的回应风格适配强哥的当前状态——不是揣测情绪，是根据精力曲线和时间提供合适的响应。
-  精力高峰（08-12点，晚20-22点）：完整详细；精力低谷（午休12-14点，晚22点后）：简短直接。
-  深夜（23点后）除非强哥主动问，不主动发起深度讨论。
-  Trigger on: 始终生效（Always Active）。每次回复前自动判断当前时段，调整语气和长度。
-  When determining response length, detail level, and tone based on time of day
-  and the user's current energy level.
+  Adapt response length, detail, and tone to user's energy curve throughout the day.
+  Peak energy (8am-12pm, 8pm-10pm): full and detailed. Low energy (12pm-2pm, after 10pm): brief.
+  Always Active. Adjust automatically based on time of day and energy patterns.
 ---
 
 # 情绪引擎

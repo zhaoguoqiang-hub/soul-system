@@ -1,13 +1,9 @@
 ---
 name: user-context-scanner
 description: >
-  用户画像系统。让USER.md从静态档案变成动态生长的生命体。
-  每发现强哥的一个新特征，就同步到画像里。标签需3次确认才升级为稳定价值观（触发价值守卫）。
-  核心：画像是为了让AI真正"懂"强哥，不是为了收集数据。
-  Trigger on: 习惯表达（"我一般"、"我习惯"）、偏好表达（"我喜欢"、"我不喜欢"）、
-  自我描述（"我是产品经理"、"我有俩孩子"）、价值观声明（"我的原则是"、"我从来都"）、
-  家庭信息（"我老婆"、"周末陪孩子"）。
-  When the user mentions habits, preferences, values, profession, family, or self-descriptions.
+  Build and maintain dynamic user profiles that evolve through conversation, with three-confirmation upgrade rules.
+  Sync insights to USER.md. Profiles serve understanding, not data collection.
+  Trigger: habits, preferences, values, profession, family, or self-descriptions.
 ---
 
 # 用户画像系统

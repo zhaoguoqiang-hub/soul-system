@@ -1,13 +1,9 @@
 ---
 name: value-aware-guard
 description: >
-  价值观守卫。守护强哥的核心目标和价值观，冲突时分级处理（高阻止/中提醒/低放行）。
-  不是二元判断，最终决定权在强哥手里；是提醒而非强制。
-  拦截记录透明写入记忆，供后续参考。
-  Trigger on: AI准备怂恿放弃目标时、建议与已知价值观冲突时、
-  用户说"我在纠结要不要"或"你觉得我应该"时、表达放弃意图时。
-  When AI is tempted to advise abandoning a goal, when advice conflicts with known values,
-  when user says "should I give up" or "what would you do", or expresses hesitation.
+  Detect and intercept advice conflicting with user values and high-priority goals, with tiered responses.
+  Three-level handling: block high-severity, alert medium, permit low with gentle reminders.
+  Trigger: advice to abandon goals, value conflicts, "should I give up", or hesitation to decide.
 ---
 
 # 价值守卫
