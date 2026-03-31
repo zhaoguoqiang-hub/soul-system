@@ -1,0 +1,17 @@
+{
+  "name": "soul-system",
+  "version": "0.1.0",
+  "description": "让AI助手拥有灵魂——主动性、记忆、反思与成长",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "pnpm -r watch",
+    "build": "pnpm -r build",
+    "test": "pnpm -r test"
+  },
+  "keywords": ["openclaw", "soul", "ai-assistant", "proactive", "memory"],
+  "author": "soul-system",
+  "license": "MIT"
+}
