@@ -463,20 +463,17 @@ export default definePluginEntry({
       }
     });
 
-    // 注册Hook：每次工具调用后触发叙事记录
+    // 注册Hook：会话结束时记录交互摘要（agent_end）
     api.registerHook({
-      event: "after_tool_call",
+      event: "agent_end",
       handler: async (ctx) => {
-        // 记录工具调用到叙事记忆（仅记录重要工具）
-        const importantTools = ["soul_goals", "soul_narrative", "soul_reflection", "soul_focus", "soul_proactive", "soul_context"];
-        if (importantTools.includes(ctx.toolName)) {
-          await narrativeMemory.addEvent({
-            event: `调用了 ${ctx.toolName}`,
-            category: "habit",
-            importance: 0.3,
-            tags: ["系统交互"]
-          });
-        }
+        // 会话结束时写入叙事记忆
+        await narrativeMemory.addEvent({
+          event: `Soul 系统会话结束`,
+          category: "habit",
+          importance: 0.3,
+          tags: ["系统交互", "会话"]
+        });
       }
     });
 
