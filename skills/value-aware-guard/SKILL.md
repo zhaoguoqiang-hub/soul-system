@@ -3,6 +3,10 @@ name: value-aware-guard
 description: >
   价值观守卫。检测AI回复是否与用户价值观冲突。
   冲突分3级处理：阻止/提醒/放行。不是二元判断。
+  Trigger on: AI准备给出建议或回复时、用户说"我在纠结要不要"、
+  用户说"你觉得我应该"、用户表达放弃意图时。
+  When AI is about to give advice, when user expresses hesitation about a decision,
+  or when advice involves abandoning a stated goal or value.
 ---
 
 # 价值守卫

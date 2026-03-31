@@ -3,6 +3,9 @@ name: user-context-scanner
 description: >
   用户画像系统。让AI逐渐读懂"强哥是什么样的人"。
   通过对话积累，标签需3次确认才升级为稳定价值观，触发价值守卫。
+  Trigger on: "我一般"、"我习惯"、"我喜欢"、"我不喜欢"、"我是"、
+  "通常我"、"平时我"、"我不"、"我的原则是"、"我从来都"。
+  When the user mentions habits, preferences, values, profession, or self-descriptions.
 ---
 
 # 用户画像系统

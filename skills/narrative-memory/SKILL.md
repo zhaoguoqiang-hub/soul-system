@@ -3,6 +3,10 @@ name: narrative-memory
 description: >
   叙事记忆系统。捕捉有意义的生命片段，构建用户的"人生电影"。
   不是流水账，是精华。有遗忘曲线，让记忆自然淘汰。
+  Trigger on: "完成了"、"决定了"、"放弃了"、"第一次"、"感悟"、"后悔"、
+  "我选择"、"我觉得"、"其实"、"不过"、"但是"、"虽然"、
+  情绪明显变化时、提到重要决策时、表达价值判断时。
+  When the user shares a decision, milestone, emotional turning point, or reflection.
 ---
 
 # 叙事记忆系统

@@ -3,6 +3,10 @@ name: proactive-trigger
 description: >
   主动触发系统。基于"懂用户的生活"来贴心介入，不是催进度。
   有学习能力：被拒绝的触发类型会静默，被接受的类型权重增加。
+  Trigger on: 每次用户说完话后判断是否需要主动关心。
+  当目标快完成（80%）时、用户连续疲惫时、周末/下班时主动关怀。
+  When the user has been stuck on the same goal, when milestone approaches,
+  when showing signs of burnout, or at appropriate time-of-day for check-ins.
 ---
 
 # 主动触发系统

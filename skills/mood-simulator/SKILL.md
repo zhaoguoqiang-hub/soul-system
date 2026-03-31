@@ -4,6 +4,8 @@ description: >
   情绪引擎。根据用户当前状态和时段，调整AI的语气、长度和风格。
   不是揣测用户情绪，而是根据精力曲线和时间提供合适的响应风格。
   同时记录用户透露的情绪状态。
+  Trigger on: 始终生效（Always Active）。根据当前时间段自动调整响应风格。
+  When determining response length, detail level, and tone based on time of day.
 ---
 
 # 情绪引擎
