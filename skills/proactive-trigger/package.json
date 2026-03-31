@@ -1,5 +1,5 @@
 {
-  "name": "@soul/proactive-trigger",
+  "name": "@soul-system/proactive-trigger",
   "version": "1.0.0",
   "description": "Determines optimal moments to send proactive messages based on time, habits, and context.",
   "main": "dist/index.js",

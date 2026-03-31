@@ -1,5 +1,5 @@
 {
-  "name": "@soul/user-context-scanner",
+  "name": "@soul-system/user-context-scanner",
   "version": "1.0.0",
   "description": "Analyzes user interactions to extract tags, values, and habits, updating the UserProfile.",
   "main": "dist/index.js",

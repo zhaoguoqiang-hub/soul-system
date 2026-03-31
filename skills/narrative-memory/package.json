@@ -1,5 +1,5 @@
 {
-  "name": "@soul/narrative-memory",
+  "name": "@soul-system/narrative-memory",
   "version": "1.0.0",
   "description": "Converts chat sessions into structured narrative memories for long-term context.",
   "main": "dist/index.js",
