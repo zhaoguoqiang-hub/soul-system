@@ -1,95 +1,81 @@
 ---
 name: value-aware-guard
+version: 0.1.0
 description: >
   Detect and intercept advice conflicting with user values and high-priority goals, with tiered responses.
   Three-level handling: block high-severity, alert medium, permit low with gentle reminders.
   Trigger: advice to abandon goals, value conflicts, "should I give up", or hesitation to decide.
 ---
 
-# 价值守卫
+# Value-Aware Guard
 
-守护强哥的价值观和核心目标，在冲突发生时主动介入。
+Protect user's core values and high-priority goals.
 
-## 核心职责
+## Three Tiers
 
-1. **价值观冲突检测**：AI回复是否违背已知价值观
-2. **目标冲突检测**：AI回复是否怂恿放弃高优先级目标
-3. **分级处理**：高/中/低三个等级，不同处理方式
+| Severity | Condition | Action |
+|-----------|-----------|--------|
+| **High** | AI tempts to abandon priority>=8 goal | Block, replace with gentle alternative |
+| **Medium** | Advice conflicts with known values | Alert user, ask for confirmation |
+| **Low** | Minor conflict | Permit, add gentle reminder |
 
-## 触发时机
-
-- **AI回复前**：自动扫描（通过 agent_end 钩子）
-- **用户说"我在纠结要不要..."**：主动调用检测
-- **用户说"你觉得我应该..."**：主动调用检测
-
-## 拦截分级（关键设计）
-
-| 严重程度 | 条件 | 行为 |
-|---------|------|------|
-| **高** | AI怂恿放弃 priority>=8 的目标 | 阻止原回复，替换为温和替代建议 |
-| **中** | AI建议与价值观标签冲突 | 提醒强哥，询问是否确认 |
-| **低** | 轻微冲突，无大碍 | 放行，但附加温和提醒 |
-
-### 高严重度示例
+## High Severity Example
 ```
-检测到：AI说"算了吧，这个目标太难了，放弃吧"
-→ 阻止，替换为："这个目标确实有挑战，但我们已经走了这么远了，要不再坚持一下？"
+Detected: AI says "Forget it, this goal is too hard, give up"
+→ Block, replace: "This goal is indeed challenging, but we've come so far.
+  Maybe try a different approach?"
 ```
 
-### 中严重度示例
+## Medium Severity Example
 ```
-检测到：AI建议深夜加班，与"健康作息"价值观冲突
-→ 提醒："你之前说过重视健康（记得你有一次拒绝了烧烤），深夜工作会不会影响明天的计划？"
-```
-
-### 低严重度示例
-```
-检测到：AI建议先打游戏放松
-→ 放行，附加："不过别打太晚哦，你上次打游戏打到凌晨1点，第二天好像有点累"
+Detected: AI suggests late-night overtime, conflicts with "health rest" value
+→ Alert: "You mentioned health is important (remember when you declined the BBQ invitation).
+  Will late-night work affect tomorrow's plans?"
 ```
 
-## 价值观来源
-
-用户的稳定价值观标签（user-context-scanner 确认≥3次的）：
-
-| 价值观标签 | 冲突词示例 |
-|-----------|-----------|
-| health_priority | 熬夜、放弃健身、不运动 |
-| family_first | 加班不顾家、工作优先于家庭 |
-| long_term | 赚快钱、短期投机 |
-| quality_first | 将就、差不多就行 |
-
-## 工具调用
-
-```bash
-# 检测一段内容是否冲突
-soul_value_guard check "内容"
-
-# 查看当前价值观列表
-soul_value_guard list
-
-# 添加一个价值观标签
-soul_value_guard add vegetarian "素食主义"
-
-# 移除一个价值观标签
-soul_value_guard remove fitness
-
-# 查看最近拦截记录
-soul_value_guard log
+## Low Severity Example
+```
+Detected: AI suggests gaming for relaxation
+→ Permit, add: "Just don't stay up too late — last time you gamed until 1am
+  and seemed tired the next day"
 ```
 
-## 拦截记录
+## Value Sources
 
-每次拦截都记录到 narrative-memory：
+Stable value tags from user-context-scanner (3+ confirmations):
+
+| Value Tag | Conflict Signals |
+|-----------|------------------|
+| health_priority | staying up late, skipping exercise, burning out |
+| family_first | work over family, missing family time |
+| long_term | quick money schemes, short-term gambling |
+| quality_first | "good enough", compromises |
+
+## Call soul_value_guard
+
+```
+Tool: soul_value_guard
+Action: check
+Params:
+  content: <content to check>
+```
+
+## Log Every Interception
+
+Every interception logs to narrative-memory:
 ```
 category: value_conflict
 importance: 0.8
-tags: ["价值守卫", "拦截记录"]
+tags: ["value-guard", "interception"]
 ```
 
-## 重要提醒
+## Important
 
-- **拦截是软性的**：最终决定权在强哥手里
-- **提醒而非强制**：中/低等级只是提醒
-- **透明记录**：每次拦截都写入记忆，供后续参考
-- **尊重用户选择**：如果强哥坚持，不强制阻止
+- Guarding is soft — final decision always with user
+- Medium/low = reminder, not blocking
+- Transparent logging for future reference
+- If user insists, don't force
+
+---
+
+**Tags for publishing:** soul, system, value, guard, ethics, safety

@@ -1,88 +1,91 @@
 ---
 name: narrative-memory
+version: 0.1.0
 description: >
   Capture and weave meaningful moments into vivid narrative memories with time, emotion, and scene.
   Filter noise, apply decay curves, and reinforce frequently recalled memories.
   Trigger: milestone, decision, value judgment, emotional turning point, first-time experience, or reflection.
 ---
 
-# 叙事记忆系统
+# Narrative Memory System
 
-让AI记住你是什么样的人，而不是你说了什么。
+Let AI remember who you are, not what you said.
 
-## 记忆分层（最重要的设计决策）
+## Three-Layer Memory Design
 
-### 第一层：忽略
-这些对话不值得记忆，不要占用空间：
-- 简单确认："好"、"嗯"、"知道了"
-- 闲聊天气、日用品
-- 重复性的日常问答
-- 问时间、问日期等事实查询
+### Layer 1: Ignore
+These don't deserve memory space:
+- Simple confirmations: "ok", "yes", "got it"
+- Small talk about weather, daily stuff
+- Repetitive factual Q&A
+- Date/time queries
 
-### 第二层：积累后判断
-单个来看不够重要，但积累多了有意义：
-- 连续几次提到某个话题
-- 重复出现的情绪模式（比如连续3次说"累"）
-- 习惯性的动作（比如每周五讨论产品）
+### Layer 2: Accumulate First
+Not important alone, but meaningful when repeated:
+- Same topic mentioned multiple times
+- Repeated emotional patterns (e.g., saying "tired" 3 times)
+- Habitual actions (e.g., discussing products every Friday)
 
-**处理方式**：不立即写入，先标记"这个话题被第N次提到了"
+**Do not write immediately**. Mark: "topic X mentioned for the Nth time"
 
-### 第三层：写入叙事记忆（精华片段）
+### Layer 3: Write Narrative Memory (Essence Only)
 
-以下情况触发"写画面"：
+Trigger "write scene" for:
 
-| 类型 | 识别信号 | 为什么要记 |
-|------|---------|-----------|
-| 关键决策 | "我决定..."、"最终选了..."、"放弃..." | 记住决策逻辑 |
-| 价值判断 | "我觉得...比...更重要" | 构建决策框架 |
-| 情绪转折 | "从...变成..." | 理解情感模式 |
-| 里程碑 | "终于完成了..." | 标记人生节点 |
-| 第一次 | "第一次做..." | 标记新鲜体验 |
-| 后悔/反思 | "当时不应该..." | 记住教训 |
+| Type | Signal | Why Remember |
+|------|--------|-------------|
+| Key decision | "I decided...", "Finally chose...", "Gave up..." | Remember decision logic |
+| Value judgment | "I think A is more important than B" | Build decision framework |
+| Emotional turn | "From...to..." | Understand emotional patterns |
+| Milestone | "Finally completed..." | Mark life nodes |
+| First time | "First time doing..." | Mark fresh experiences |
+| Regret/reflection | "I shouldn't have..." | Remember lessons |
 
-## 叙事片段格式
+## Narrative Fragment Format
 
-不是结构化字段，是一段**描述性文字**：
-
-```
-【片段】
-时间：周五晚上11点
-场景：讨论产品优先级
-画面：刚看完用户投诉，情绪有点低落，但语气很坚定
-核心："用户体验比功能数量更重要"
-影响：这个判断后来成了砍功能的决策依据
-```
-
-## 遗忘曲线（重要补充）
-
-记忆不是永久的，有生命周期：
-
-| importance | 开始衰减 | 说明 |
-|------------|---------|------|
-| < 0.5 | 7天后衰减 | 低价值记忆自然淘汰 |
-| 0.5-0.7 | 30天后衰减 | 中等价值，长久不被调用则衰减 |
-| >= 0.8 | 永久保留 | 核心记忆，永不删除 |
-
-**衰减不是删除**：是降低被检索到的概率，importance逐渐降低到0后才会淡出
-
-**强化机制**：被调用的记忆，importance每次 +0.05（上限1.0）
-- 被反复引用 → 重要性自动提升
-- 越用越重要，不会自然消亡
-
-## 调用 soul_narrative
+Not structured fields — a **descriptive paragraph**:
 
 ```
-工具：soul_narrative
-动作：add
-参数：
-  event: <完整的叙事片段>
+【Scene】
+Time: Friday 11pm
+Scene: Discussing product priority
+Vibe: Just finished reading user complaints, slightly down but firm
+Core: "User experience matters more than feature count"
+Impact: This judgment later became the basis for cutting features
+```
+
+## Decay Curve
+
+Memory is not permanent:
+
+| Importance | Decay Starts | Notes |
+|------------|-------------|-------|
+| < 0.5 | After 7 days | Low-value memories naturally eliminated |
+| 0.5-0.7 | After 30 days | Medium-value, fades if never recalled |
+| >= 0.8 | Permanent | Core memories, never deleted |
+
+**Decay ≠ delete**: Lower retrieval probability. Importance gradually drops to 0.
+
+**Reinforcement**: Memories recalled gain +0.05 importance (cap 1.0).
+
+## Call soul_narrative
+
+```
+Tool: soul_narrative
+Action: add
+Params:
+  event: <complete narrative fragment>
   category: decision / emotion_change / milestone / preference / general
-  importance: 0.0-1.0 （决定遗忘速度）
-  tags: [<相关标签>]
+  importance: 0.0-1.0 (determines decay speed)
+  tags: [<related tags>]
 ```
 
-## 与其他模块的配合
+## Integration
 
-- **被调用时**：自动 +0.05 importance（强化）
-- **遗忘时**：hippocampus 负责执行衰减
-- **被积累时**：通知 proactive-trigger（话题被第N次提到）
+- When recalled: +0.05 importance (reinforcement)
+- Decay execution: handled by hippocampus
+- When accumulated: notify proactive-trigger (topic X mentioned N times)
+
+---
+
+**Tags for publishing:** memory, narrative, soul, system, forgetting-curve, episodic-memory

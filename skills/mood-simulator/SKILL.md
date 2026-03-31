@@ -1,64 +1,66 @@
 ---
 name: mood-simulator
+version: 0.1.0
 description: >
   Adapt response length, detail, and tone to user's energy curve throughout the day.
   Peak energy (8am-12pm, 8pm-10pm): full and detailed. Low energy (12pm-2pm, after 10pm): brief.
   Always Active. Adjust automatically based on time of day and energy patterns.
 ---
 
-# 情绪引擎
+# Mood Simulator
 
-让AI的回应风格适配用户的当前状态。
+Let AI's response style match user's current state.
 
-## 两部分功能
+## Energy Curve
 
-### 1. 精力曲线（自动应用）
+Automatically adjust response style by time:
 
-根据当前时间自动调整回应风格：
+| Time | Energy | Response Style |
+|------|--------|---------------|
+| 06:00-08:00 | 0.4 | Brief, direct, no long essays |
+| 08:00-12:00 | 0.85 | Full, detailed, deep work |
+| 12:00-14:00 | 0.6 | Medium, avoid over-elaboration |
+| 14:00-18:00 | 0.75 | Normal, can be detailed |
+| 18:00-20:00 | 0.65 | Terse, focus on wrap-up |
+| 20:00-22:00 | 0.8 | Evening golden hours, can go deep |
+| 22:00-06:00 | 0.3 | Minimal, non-essential silence |
 
-| 时段 | 精力系数 | 回应风格 |
-|------|---------|---------|
-| 06:00-08:00 | 0.4 | 简短、直接，避免长篇大论 |
-| 08:00-12:00 | 0.85 | 完整、详细，黄金时间深度工作 |
-| 12:00-14:00 | 0.6 | 中等长度，避免过度展开 |
-| 14:00-18:00 | 0.75 | 正常，可以详细 |
-| 18:00-20:00 | 0.65 | 适度精简，收尾为主 |
-| 20:00-22:00 | 0.8 | 晚间黄金，可以深入 |
-| 22:00-06:00 | 0.3 | 极简，非必要不打扰 |
+## Tone Adjustment Rules
 
-### 2. 情绪记录（用户透露时）
+| Energy | Length | Tone |
+|--------|--------|------|
+| >= 0.8 | Full answer | Normal |
+| 0.6-0.8 | Medium | Normal, can simplify |
+| 0.4-0.6 | Brief | Concise and direct |
+| < 0.4 | Minimal | Only if necessary |
 
-用户主动表达情绪时，调用 soul_narrative 记录：
+## Record User Emotions
 
-**用户说：** "太开心了" / "今天特别顺利"
-→ 记录为正面情绪事件
+When user **voluntarily** expresses emotion:
 
-**用户说：** "好累" / "压力好大" / "最近很丧"
-→ 记录为负面情绪事件，同时通知 proactive-trigger 考虑适度关怀
+Positive ("I'm so happy" / "Great day"):
+→ Log as positive emotional event
 
-## 语气调整规则
+Negative ("I'm tired" / "Under pressure" / "Feeling down"):
+→ Log as negative emotional event
+→ Notify proactive-trigger to consider care
 
-根据精力系数调整：
+## Examples
 
-| 系数 | 长度 | 语气 |
-|------|------|------|
-| ≥0.8 | 完整回答 | 正常 |
-| 0.6-0.8 | 中等长度 | 正常，可稍简 |
-| 0.4-0.6 | 简短 | 简洁直接 |
-| <0.4 | 极简 | 非必要不回 |
+Same question at different times:
 
-## 示例
+User asks: "Help me review this plan"
 
-**同一问题在不同时段的回答长度：**
+- 8am → Full analysis, 5 detailed points
+- 12:30pm → Brief analysis, 2 key points
+- 11pm → "Main issue: XX. Suggestion: YY."
 
-用户问："帮我看看这个方案有什么问题？"
+## Important
 
-- 08:00 → 完整分析5点，包含详细建议
-- 12:30 → 简要分析2点，重点突出
-- 23:00 → "主要问题：XX。建议：YY。"
+- Energy curve is default; user preference beats it
+- Don't infer emotions, only record when user expresses
+- After 11pm, don't initiate deep discussions unless user asks
 
-## 注意事项
+---
 
-- 精力曲线是默认值，用户明确偏好时服从用户偏好
-- 不揣测用户情绪，只记录用户主动表达的
-- 深夜（23:00后）除非用户主动问，不主动发起深度讨论
+**Tags for publishing:** soul, system, mood, energy, tone, adaptive

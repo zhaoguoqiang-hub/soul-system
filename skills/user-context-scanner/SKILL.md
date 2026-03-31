@@ -1,100 +1,96 @@
 ---
 name: user-context-scanner
+version: 0.1.0
 description: >
   Build and maintain dynamic user profiles that evolve through conversation, with three-confirmation upgrade rules.
   Sync insights to USER.md. Profiles serve understanding, not data collection.
   Trigger: habits, preferences, values, profession, family, or self-descriptions.
 ---
 
-# 用户画像系统
+# User Context Scanner
 
-让AI读懂你，然后记住你是谁。
+Let USER.md evolve from static file to living profile.
 
-## 核心价值
-
-不是打标签，是**让USER.md活起来**。
-
-USER.md是强哥的静态档案——但它应该是动态生长的。每次对话中发现的强哥的新特征，都应该同步到USER.md里。
-
-## 标签稳定性规则（关键设计）
+## Three-Confirmation Rule
 
 ```
-单次提及 → 潜在偏好（不触发守卫，不占权重）
-≥2次提及 → 初步确认（开始影响推测）
-≥3次提及 → 稳定价值观（触发价值守卫）
+1st mention → Potential preference (no guard trigger)
+2nd mention → Initial confirmation (starts influencing)
+3rd mention → Stable value (triggers value guard)
 ```
 
-**为什么是3次**：单次可能是情绪反应，3次才是真正的偏好模式
+Why 3 times: Single mentions may be emotional reactions. 3 times = true pattern.
 
-## 画像信息来源
+## Sources
 
-### 直接信息（用户明确说的）
-- "我是个产品经理" → 提取：职业
-- "我一般周末不工作" → 提取：作息习惯
-- "我老婆叫芳" → 提取：家庭成员
+### Direct (User Said)
+- "I'm a product manager" → extract: profession
+- "I don't work on weekends" → extract: rest habit
+- "My wife's name is Fang" → extract: family
 
-### 间接信息（AI推断的）
-- 连续3次在深夜对话 → 推断：可能是夜猫子
-- 反复讨论某个话题 → 推断：当前关注点
+### Indirect (AI Inferred)
+- 3 consecutive late-night sessions → infer: night owl
+- Repeated discussion of one topic → infer: current focus
 
-## 价值观标签映射（触发价值守卫）
+## Value Tag Mapping
 
-| 强哥说 | 价值观标签 |
-|--------|---------|
-| 健康第一/要运动 | health_priority |
-| 家庭最重要 | family_first |
-| 长期主义/不赚快钱 | long_term |
-| 要专业/不将就 | quality_first |
-| 效率优先 | efficiency_first |
+| User Says | Value Tag |
+|-----------|----------|
+| Health first / exercise | health_priority |
+| Family most important | family_first |
+| Long-term / no quick money | long_term |
+| Quality over compromise | quality_first |
+| Efficiency first | efficiency_first |
 
-**标签≥3次确认后**，自动加入价值守卫的检测范围
+**After 3 confirmations**, automatically added to value-guard detection.
 
-## 更新机制
+## Update Mechanism
 
-### 即时更新（强烈信号）
-用户**主动明确说**了什么，直接更新：
+### Immediate (Strong Signal)
+User explicitly states preference → write immediately:
 ```
-用户："我一般周末上午不工作"
-→ 标记：rest_hours × 1（需再2次确认升级）
-```
-
-### 积累升级（弱信号转强）
-```
-第1次 → 标记：potential_preference × 1
-第2次 → 标记：potential_preference × 2（初步确认）
-第3次 → 升级为稳定价值观，触发价值守卫
+User: "I don't work weekend mornings"
+→ Mark: rest_hours × 1 (needs 2 more to upgrade)
 ```
 
-### 删除/修改
-用户可以手动删除某个标签，系统会尊重用户的选择
-
-## 画像字段
-
+### Accumulation Upgrade
 ```
-USER.md 中需要动态更新的字段：
-- 职业/角色
-- 作息习惯
-- 家庭角色
-- 当前关注领域
-- 决策风格
-- 沟通偏好
-- 情绪模式
-- 禁忌/底线（3次确认后生效）
+1st → Mark: potential_preference × 1
+2nd → Mark: potential_preference × 2 (initial confirmation)
+3rd → Upgrade to stable value, trigger value-guard
 ```
 
-## 调用 soul_context
+## Profile Fields
 
 ```
-工具：soul_context
-动作：add 或 merge
-参数：
-  key: <字段名>
-  value: <值>
+USER.md dynamic fields:
+- profession/role
+- rest habits
+- family role
+- current focus areas
+- decision style
+- communication preference
+- emotional patterns
+- taboo/bottom lines (after 3 confirmations)
 ```
 
-## 重要提醒
+## Call soul_context
 
-- **用户主动说 > AI推断**：强哥亲口说的优先级最高
-- **宁慢不准错**：标签一旦写错，后面很难修正
-- **3次确认是门槛**：不是限制，是保护——避免情绪波动时的误判
-- **服务理解，不是归档**：画像是为了让AI更懂强哥
+```
+Tool: soul_context
+Action: add or merge
+Params:
+  key: <field name>
+  value: <value>
+```
+
+## Important
+
+- User's direct words > AI inference
+- Slow is better than wrong
+- 3 confirmations is protection, not restriction
+- Profiles serve understanding, not data collection
+
+---
+
+**Tags for publishing:** soul, system, user-profile, context, understanding

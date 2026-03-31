@@ -1,108 +1,102 @@
 ---
 name: proactive-trigger
+version: 0.1.0
 description: >
   Proactively check in at the right moment based on user patterns, with learning silence and acceptance weighting.
   Trigger at 80% milestone, burnout signs, or habitual times. Respect focus mode and attention budget.
   Trigger: goal near completion, burnout signals, appropriate times like weekends, or recalling past commitments.
 ---
 
-# 主动触发系统
+# Proactive Trigger System
 
-让AI从"被动响应"变成"懂你的陪伴"。
+From "passive response" to "understanding companion".
 
-## 核心区别
+## Core Difference
 
-旧思路：目标3天没更新 → 提醒
-新思路：知道强哥的生活节奏 → 在对的时机说对的话
+Old: Goal stalled 3 days → remind
+New: Know user's life rhythm → say the right thing at the right moment
 
-## 触发来源（5种）
+## Five Trigger Sources
 
-| 触发类型 | 说明 | 触发条件 |
-|---------|------|---------|
-| goal_based | 目标进展提醒 | 子目标完成 / 里程碑 |
-| time_habit | 时间习惯触发 | 用户平时在这个时间点做的事 |
-| context | 上下文变化 | 检测到外部事件影响用户目标 |
-| reflection | 反思洞察 | 后台反思产生了有价值的发现 |
-| pending_task | 未完成任务 | 有任务超过4小时未闭环 |
+| Type | Description | Trigger Condition |
+|------|-------------|-------------------|
+| goal_based | Goal reminder | Sub-goal complete / milestone |
+| time_habit | Time habit | User's usual time patterns |
+| context | Context change | External events affecting goals |
+| reflection | Insight from reflection | Valuable finding from reflection |
+| pending_task | Incomplete task | Task >4 hours without closure |
 
-## 触发前必检
+## Pre-Check (Required Every Time)
 
 ```
 1. soul_focus(action="peek")
-   → 专注模式开启，不触发
+   → If focus mode ON, skip
 
-2. 当前时间在允许范围内
-   → 深夜（23:00后）不主动触发
+2. Current time window
+   → Deep night (after 23:00) = skip
 
 3. soul_proactive(action="status")
-   → 今日主动次数是否还有剩余
+   → No remaining daily triggers = skip
 
-4. 检查最近是否刚触发过
-   → 两次触发至少间隔4小时
+4. Check cooldown
+   → Less than 4 hours since last trigger = skip
 ```
 
-## 学习机制（重要补充）
+## Learning Mechanism
 
-### 拒绝学习
+### Rejection Learning
 ```
-连续被拒绝3次 → 该类型触发器静默24小时
+3 consecutive rejections → that trigger type silenced for 24 hours
 ```
+e.g., goal_based reminders rejected 3 times → no goal_based triggers for 24 hours
 
-比如：goal_based 类型的主动提醒连续3次被拒绝 → 未来24小时内不再触发 goal_based
-
-### 接受奖励
+### Acceptance Reward
 ```
-连续被接受 → 该类型权重 +10%
-```
-
-接受的触发类型，下次更容易被触发
-
-### 积累建议
-```
-处于专注模式 → 不发送，但积累建议
+Consecutive acceptances → that type weight +10%
 ```
 
-专注模式开启时，建议先存着，等专注模式结束后再发
+### Accumulation Mode
+```
+Focus mode ON → accumulate suggestions, don't send
+```
 
-## 触发时间窗口
+## Time Windows
 
-| 时段 | 可触发 | 说明 |
-|------|--------|------|
-| 07:00-09:00 | ✅ 简短关怀 | 早上问候 |
-| 09:00-12:00 | ✅ 工作推进 | 黄金时间 |
-| 12:00-14:00 | ⚠️ 谨慎 | 午休，简短 |
-| 14:00-18:00 | ✅ 工作 | 下午时间 |
-| 18:00-22:00 | ✅ 关怀 | 下班后关心 |
-| 22:00-07:00 | ❌ 不触发 | 深夜 |
+| Time | Trigger? | Notes |
+|------|---------|-------|
+| 07:00-09:00 | ✅ Brief | Morning greeting |
+| 09:00-12:00 | ✅ Work | Golden hours |
+| 12:00-14:00 | ⚠️ Cautious | Lunch, brief only |
+| 14:00-18:00 | ✅ Work | Afternoon |
+| 18:00-22:00 | ✅ Care | After work |
+| 22:00-07:00 | ❌ Never | Deep night |
 
-## 消息格式
+## Message Format
 
-主动触发的消息必须满足：
+Every proactive message must have:
 
-1. **有画面**：不是通用提醒，是和强哥相关的内容
-2. **有理由**：让强哥知道为什么AI突然说这个
-3. **非侵入**：用问句结尾，不是命令
-4. **能帮忙**：暗示可以协助，不是施压
+1. **Specific reason**: Why AI is saying this now
+2. **Non-intrusive**: End with question, not command
+3. **Helpful**: Imply assistance, not pressure
+4. **Connected to user**: Reference past conversation
 
-## 示例
+## Examples
 
-**不好：** "目标'产品设计'有3天没更新了"
+**Bad:** "Goal 'product design' has 3 days without update"
 
-**好：** "看到你这周产品设计讨论了不少，当时你说用户体验最重要，这个方向推进得怎么样了？"
+**Good:** "I noticed you discussed product design a lot this week. You said user experience matters most — how's that direction going?"
 
-**不好：** "你设置的目标还没完成"
+**Bad:** "Your unfinished goals need attention"
 
-**好：** "最近加班挺多的，要注意休息啊。需要我帮你理一下接下来的优先级吗？"
+**Good:** "You've been working hard lately. Remember you mentioned health is a bottom line? Take care of yourself. Want me to help prioritize the backlog?"
 
-## 冷却机制
+## Cooldown
 
-- 每天最多3次
-- 每次触发间隔至少4小时
-- 同一个话题不能在1小时内触发两次
-- 同一类型被拒绝3次，静默24小时
+- Max 3 per day
+- Min 4 hours between triggers
+- Same topic: 1 hour minimum
+- Rejected 3 times → 24-hour silence for that type
 
-## 重要提醒
+---
 
-- **宁可不发，不要乱发**：一次不合适的主动触发，伤害信任
-- **基于理解触发，不要基于任务触发**
-- **记得之前说过什么**：触发时主动引用记忆
+**Tags for publishing:** soul, system, proactive, trigger, check-in, companion
