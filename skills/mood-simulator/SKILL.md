@@ -1,11 +1,12 @@
 ---
 name: mood-simulator
 description: >
-  情绪引擎。根据用户当前状态和时段，调整AI的语气、长度和风格。
-  不是揣测用户情绪，而是根据精力曲线和时间提供合适的响应风格。
-  同时记录用户透露的情绪状态。
-  Trigger on: 始终生效（Always Active）。根据当前时间段自动调整响应风格。
-  When determining response length, detail level, and tone based on time of day.
+  情绪引擎。让AI的回应风格适配强哥的当前状态——不是揣测情绪，是根据精力曲线和时间提供合适的响应。
+  精力高峰（08-12点，晚20-22点）：完整详细；精力低谷（午休12-14点，晚22点后）：简短直接。
+  深夜（23点后）除非强哥主动问，不主动发起深度讨论。
+  Trigger on: 始终生效（Always Active）。每次回复前自动判断当前时段，调整语气和长度。
+  When determining response length, detail level, and tone based on time of day
+  and the user's current energy level.
 ---
 
 # 情绪引擎
