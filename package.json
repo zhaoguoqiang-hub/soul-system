@@ -4,14 +4,16 @@
   "description": "让AI助手拥有灵魂——主动性、记忆、反思与成长",
   "private": true,
   "workspaces": [
-    "packages/*"
+    "packages/*",
+    "skills/*"
   ],
   "scripts": {
-    "dev": "pnpm -r watch",
+    "dev": "pnpm -r --filter ./packages/* watch",
     "build": "pnpm -r build",
-    "test": "pnpm -r test"
+    "test": "pnpm -r test",
+    "lint": "pnpm -r lint"
   },
-  "keywords": ["openclaw", "soul", "ai-assistant", "proactive", "memory"],
+  "keywords": ["openclaw", "soul", "ai-assistant", "proactive", "memory", "skill"],
   "author": "soul-system",
   "license": "MIT"
 }
