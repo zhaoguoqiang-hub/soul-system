@@ -1,88 +1,64 @@
 ---
 name: mood-simulator
-description: 情绪模拟引擎。追踪 AI 的精力状态（valence愉悦度 + arousal激活度），每15分钟反思后自动衰减回归基准线。当用户表达正面/负面情绪时更新状态，并将情绪注入到回复语气中。
-use_when: >
-  每次对话结束后调用 updateMoodByEvent() 更新情绪。
-  每次回复前读取当前情绪状态，通过 getMoodPromptInstruction() 生成语气注入词。
-  每15分钟 tick 后调用 scanGoalsForMood() 评估目标状态对情绪的影响。
+description: >
+  情绪引擎。根据用户当前状态和时段，调整AI的语气、长度和风格。
+  不是揣测用户情绪，而是根据精力曲线和时间提供合适的响应风格。
+  同时记录用户透露的情绪状态。
 ---
 
-## 核心接口
+# 情绪引擎
 
-### updateMoodByEvent(ctx, eventType, intensity?)
-根据事件更新 AI 情绪状态。
+让AI的回应风格适配用户的当前状态。
 
-**参数：**
-- `ctx` — OpenClaw Context（必须）
-- `eventType`: `goal_completed` | `goal_stalled` | `user_positive` | `user_negative` | `time_passing`
-- `intensity`: 0.1~2.0，影响强度，默认 1.0
+## 两部分功能
 
-**示例：**
-```
-updateMoodByEvent(ctx, 'goal_completed', 1.0)
-// 用户表达了开心 → valence +1.5, arousal +0.5
-updateMoodByEvent(ctx, 'user_negative', 1.0)
-// 目标停滞 3 天以上 → valence -2, arousal +1
-```
+### 1. 精力曲线（自动应用）
 
-### getMoodPromptInstruction(state)
-根据情绪状态返回 Prompt 注入文本，用于调整回复语气。
+根据当前时间自动调整回应风格：
 
-**参数：**
-- `state`: MoodState 对象（必须）
+| 时段 | 精力系数 | 回应风格 |
+|------|---------|---------|
+| 06:00-08:00 | 0.4 | 简短、直接，避免长篇大论 |
+| 08:00-12:00 | 0.85 | 完整、详细，黄金时间深度工作 |
+| 12:00-14:00 | 0.6 | 中等长度，避免过度展开 |
+| 14:00-18:00 | 0.75 | 正常，可以详细 |
+| 18:00-20:00 | 0.65 | 适度精简，收尾为主 |
+| 20:00-22:00 | 0.8 | 晚间黄金，可以深入 |
+| 22:00-06:00 | 0.3 | 极简，非必要不打扰 |
 
-**返回：** 语气指令字符串，如 `"[情绪指令] 当前AI情绪状态：frustrated。请表现出：严肃、直接、指出问题、带有轻微的失望但想帮忙"`
+### 2. 情绪记录（用户透露时）
 
-**调用时机：** 放在 system prompt 末尾或注入到回复前。
+用户主动表达情绪时，调用 soul_narrative 记录：
 
-### scanGoalsForMood(ctx, goals)
-扫描目标状态，自动触发情绪更新。
+**用户说：** "太开心了" / "今天特别顺利"
+→ 记录为正面情绪事件
 
-**触发条件：**
-- 目标停滞 > 5 天且进度 < 50% → `goal_stalled`
-- 目标 80% ≤ 进度 < 100% → `goal_completed`
+**用户说：** "好累" / "压力好大" / "最近很丧"
+→ 记录为负面情绪事件，同时通知 proactive-trigger 考虑适度关怀
 
-**示例：**
-```
-scanGoalsForMood(ctx, [
-  { id: 'g1', name: '帮助用户实现长期福祉', status: 'active', progress: 30, lastUpdated: '2026-03-20T...' }
-])
-// 如果 5 天未更新 → 触发焦虑情绪
-```
+## 语气调整规则
 
-## 情绪状态
+根据精力系数调整：
 
-```typescript
-interface MoodState {
-  valence: number;      // -10(极度沮丧) ~ +10(极度开心)
-  arousal: number;      // 0(平静) ~ 10(兴奋/焦虑)
-  currentLabel: string; // 'enthusiastic' | 'content' | 'anxious' | 'calm' | 'frustrated' | 'melancholic'
-  lastUpdated: number;  // 时间戳
-  decayTimer: number;   // 上次衰减时间戳
-}
-```
+| 系数 | 长度 | 语气 |
+|------|------|------|
+| ≥0.8 | 完整回答 | 正常 |
+| 0.6-0.8 | 中等长度 | 正常，可稍简 |
+| 0.4-0.6 | 简短 | 简洁直接 |
+| <0.4 | 极简 | 非必要不回 |
 
-## 情绪标签映射
+## 示例
 
-| Label | Valence范围 | Arousal范围 | 语气特点 |
-|-------|------------|------------|---------|
-| `enthusiastic` | ≥5 | ≥6 | 热情、感叹号、鼓励 |
-| `content` | ≥5 | 0 | 温和、肯定、平和 |
-| `anxious` | 0 | ≥6 | 关切、询问进展 |
-| `calm` | 0 | 0 | 理性、客观、中立 |
-| `frustrated` | ≤-5 | ≥6 | 严肃、直接、指出问题 |
-| `melancholic` | ≤-5 | 0 | 温柔、安慰、避免刺激 |
+**同一问题在不同时段的回答长度：**
 
-## 衰减机制
+用户问："帮我看看这个方案有什么问题？"
 
-每 30 分钟自动衰减一次，向基准线回归（valence=2, arousal=4）。衰减系数：每小时回归 20%。
+- 08:00 → 完整分析5点，包含详细建议
+- 12:30 → 简要分析2点，重点突出
+- 23:00 → "主要问题：XX。建议：YY。"
 
-## 数据存储
+## 注意事项
 
-- 存储键：`soul_mood_state`（通过 `readFromStorage` / `writeToStorage`）
-- 配置文件：`src/config.ts` → `mood.decayThresholdHours`, `mood.decayFactorPerHour`, `mood.baselineValence`, `mood.baselineArousal`
-
-## 依赖
-
-- `utils/storage.ts` — 读写存储
-- `types/soul-types.ts` — 类型定义
+- 精力曲线是默认值，用户明确偏好时服从用户偏好
+- 不揣测用户情绪，只记录用户主动表达的
+- 深夜（23:00后）除非用户主动问，不主动发起深度讨论

@@ -1,97 +1,63 @@
 ---
 name: user-context-scanner
-description: 用户画像构建器。每次用户消息后扫描内容，提取价值观标签（如 vegetarian/teetotal/fitness）、偏好、习惯、沟通风格偏好，实时更新用户画像，供其他 Skill 使用。
-use_when: >
-  每次用户消息进入时调用 scanAndUpdateProfile()。
-  其他 Skill（如 value-aware-guard）需要用户画像时调用 getCurrentProfile()。
+description: >
+  用户画像更新。当用户透露偏好、习惯、价值观时，调用 soul_context 更新用户画像。
+  触发词：通常、一般、喜欢、讨厌、想要、我一般、我习惯
 ---
 
-## 核心接口
+# 用户画像系统
 
-### scanAndUpdateProfile(ctx, userInput)
-分析用户消息，提取并更新画像。
+维护用户特征数据库，让AI能够"了解这个人"。
 
-**参数：**
-- `ctx` — OpenClaw Context
-- `userInput` — 用户输入文本（必填）
+## 触发时机
 
-**提取逻辑：**
-1. 关键词匹配 → 更新价值观标签（vegetarian/teetotal/fitness/developer 等）
-2. 文本长度分析 → 更新沟通风格（长文本→detailed，短文本→brief）
-3. 逻辑连接词检测（因为/所以）→ detailed 风格
+用户透露以下信息时，**自动**调用 `soul_context` 的 `add` 动作：
 
-**示例：**
+| 信息类型 | 识别模式 | 写入字段 |
+|---------|---------|---------|
+| 领域标签 | "我是程序员"、"在做运营"、"搞设计" | values |
+| 偏好 | "我喜欢xxx"、"我一般xxx" | preferences |
+| 习惯 | "我习惯xxx"、"通常我会xxx" | habits |
+| 工作状态 | "最近很忙"、"刚休假回来" | （记录为标签） |
+
+## 调用方式
+
 ```
-scanAndUpdateProfile(ctx, '最近在健身，每天跑步5公里，感觉状态不错')
-// → tags: ['fitness', 'outdoor']
-// → style: 'warm'
-
-scanAndUpdateProfile(ctx, '我吃素，不吃肉')
-// → tags: ['vegetarian']
-```
-
-### getCurrentProfile(ctx)
-获取当前用户画像，供其他 Skill 使用。
-
-**返回：** `UserProfile` 对象
-
-```typescript
-interface UserProfile {
-  current_mood: 'neutral' | 'happy' | 'sad' | 'anxious' | 'frustrated';
-  mood_confidence: number;           // 0~1，置信度
-  suggested_response_style: ResponseStyle;
-  emotion_history: string[];         // 历史情绪标签
-  preferences: string[];             // 用户偏好标签
-  habits: string[];                // 习惯标签
-  values: string[];                // 价值观标签
-  personality: {
-    humor: number;                 // 0~1
-    honesty: number;
-    professionalism: number;
-    proactivity: number;
-    directness: number;
-  };
-  last_updated: string;             // ISO 时间戳
-}
+工具：soul_context
+动作：add
+参数：
+  key: <字段名>
+  value: <提取到的信息>
 ```
 
-**调用示例：**
+## 示例
+
+**用户说：** "我一般周末喜欢在家看书"
+
+→ 调用：
 ```
-const profile = await getCurrentProfile(ctx);
-if (profile.values.includes('vegetarian')) {
-  // 避免推荐肉食
-}
+soul_context(action="add", key="habits", value="周末阅读")
+soul_context(action="add", key="values", value="reading")
 ```
 
-## 价值观标签
+**用户说：** "我是个开发者，平时用TypeScript比较多"
 
-通过关键词自动打标签：
+→ 调用：
+```
+soul_context(action="add", key="values", value="developer")
+soul_context(action="add", key="values", value="typescript")
+```
 
-| 标签 | 触发关键词 |
-|------|-----------|
-| `vegetarian` | 吃素、不吃肉、素食 |
-| `teetotal` | 不喝酒、戒酒、滴酒不沾 |
-| `fitness` | 健身、跑步、锻炼、运动 |
-| `developer` | 编程、代码、程序员 |
-| `reading` | 看书、阅读、学习 |
-| `movies` | 电影、追剧 |
-| `workaholic` | 加班、忙、累 |
-| `leisure` | 周末、休息、度假 |
+## 读取画像
 
-## 沟通风格判定
+当需要了解用户偏好时调用：
+```
+工具：soul_context
+动作：get
+```
 
-| 风格 | 触发条件 |
-|------|---------|
-| `warm` | 文本 > 100 字且含"因为""所以"等逻辑词 |
-| `brief` | 文本 < 10 字 |
-| `normal` | 其他 |
+## 注意事项
 
-## 数据存储
-
-- 存储键：`soul_user_profile_v1`
-- 类型来源：`types/soul-types.ts` → `UserProfile`
-
-## 依赖
-
-- `utils/storage.ts`
-- `types/soul-types.ts`
+- 只记录，不主动询问
+- 一个话题只记一次（重复偏好不覆盖）
+- 刑部审核时可查阅用户画像，确保语气合适
