@@ -48,11 +48,11 @@ Soul System
 | `context_get/update` | 共享上下文读写 |
 
 **HTTP API（供控制面板调用）：**
-- `GET /api/soul/status` - 系统综合状态
-- `GET /api/soul/goals` - 目标列表
-- `GET /api/soul/signals` - 信号统计
-- `GET /api/soul/narratives` - 叙事记忆
-- `GET /api/soul/context` - 上下文摘要
+- `GET /plugins/soul/status` - 系统综合状态
+- `GET /plugins/soul/goals` - 目标列表
+- `GET /plugins/soul/signals` - 信号统计
+- `GET /plugins/soul/narratives` - 叙事记忆
+- `GET /plugins/soul/context` - 上下文摘要
 
 ### 内生目标系统
 
