@@ -1,24 +1,23 @@
 {
-  "name": "@soul-system/proactive-engine",
-  "version": "0.1.0",
-  "description": "主动引擎插件：为OpenClaw提供内生目标系统、后台反思线程与主动触发能力",
+  "name": "proactive-engine",
+  "version": "1.1.0",
   "type": "module",
-  "main": "index.js",
+  "description": "Proactive engine for soul-system: periodic context checks and memory updates",
+  "main": "index.ts",
   "openclaw": {
-    "extensions": ["./index.js"]
-  },
-  "exports": {
-    ".": {
-      "import": "./index.js",
-      "types": "./index.d.ts"
+    "extensions": ["./index.ts"],
+    "compat": {
+      "pluginApi": "2026.3.28"
+    },
+    "build": {
+      "openclawVersion": "2026.3.28"
     }
   },
-  "peerDependencies": {
-    "openclaw": ">=2026.1.0"
-  },
-  "devDependencies": {
-    "typescript": "^5.7.0",
-    "@types/node": "^22.0.0"
-  },
-  "keywords": ["openclaw", "plugin", "soul", "proactive", "goal-manager", "reflection"]
+  "keywords": ["soul-system", "proactive", "memory", "openclaw"],
+  "license": "MIT",
+  "homepage": "https://clawhub.ai/plugins/proactive-engine",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/soul-system/proactive-engine"
+  }
 }
