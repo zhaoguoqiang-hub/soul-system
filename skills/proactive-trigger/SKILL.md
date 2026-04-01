@@ -1,135 +1,124 @@
 ---
 name: proactive-trigger
-version: 0.2.0
+version: 0.3.0
 description: >
-  Proactive Trigger v2: Interest Graph热度衰减 + Ping Pressure沉默驱动 + Morning Briefing + Recover Before Asking。
-  基于记忆挖掘而非假设触发，在对的时间说对的话。
+  主动触发引擎v3：基于话题热度衰减模型 + 沉默等待指数 + 每日简报机制。
+  在对的时间说对的话，不打扰、不遗漏、有价值。
 ---
 
-# Proactive Trigger v2
+# Proactive Trigger v3
 
-从"等用户问"到"在你开口之前就懂你"。
+让AI主动出现在用户需要的时候，而不是用户开口求助。
 
-## v1 vs v2 核心区别
+## 核心原则
 
-| v1 | v2 |
-|----|----|
-| 定时触发 | Interest Graph热度驱动 |
-| 沉默不打扰 | 沉默越久→Ping Pressure越高 |
-| 不知道该不该发 | 先Recover再判断 |
-| 简单cooldown | 话题三态循环 |
+1. **不打扰是底线** — 宁可不发，不能乱发
+2. **有上下文才触发** — 每次触发必须先查记忆
+3. **话题有生命周期** — 热门话题会自然冷却
+4. **沉默越久越主动** — 长时间不互动才提高权重
 
-## 核心概念
+## 话题热度衰减模型
 
-### 1. Interest Graph（话题热度图）
+每个话题有三种状态：
 
+| 状态 | 触发能力 | 说明 |
+|------|---------|------|
+| 🔥 活跃 | 可主动触发 | 24h内被提及≥3次 |
+| 🌱 浮现 | 不可触发 | 1-2次，积累中 |
+| ❄️ 休眠 | 不可触发 | 7天未提及，自动冷却 |
+
+**衰减规则：**
 ```
-话题不是非热即冷，有三个状态：
-
-🔥 Hot（活跃）
-- 最近24小时内被提及≥3次
-- 可以触发主动ping
-- 每个话题每天最多1次ping
-
-🌱 Emerging（浮现）
-- 被提及1-2次
-- 推向Hot，但不主动ping
-- 可作为Morning Briefing素材
-
-❄️ Dormant（休眠）
-- 超过7天没被提及
-- 自动降冷，不计入trigger budget
-- 用户主动提及时可重新激活
-
-冷却规则：
-🔥→🌱: 3天内没再提
-🌱→❄️: 7天内没再提
-❄️→🌱: 用户主动提及任意次数
+🔥 → 🌱 : 3天内未再提
+🌱 → ❄️ : 7天内未再提
+❄️ → 🌱 : 用户主动提及，自动激活
 ```
 
-### 2. Ping Pressure（沉默压力）
+## 沉默等待指数
 
+根据用户最近互动时间计算触发意愿：
+
+| 沉默时长 | 指数 | 说明 |
+|---------|------|------|
+| 0-2h | 0.2 | 刚聊过，克制 |
+| 2-6h | 0.5 | 正常等待 |
+| 6-12h | 0.8 | 适当主动 |
+| 12h+ | 1.0 | 强主动 |
+
+**计算公式：**
 ```
-沉默时间越长，主动触发的可能性越高：
+TriggerScore = SilenceIndex × TopicHeat × Urgency
 
-0-2小时：克制，Ping Pressure = 0.2
-2-6小时：适度，Ping Pressure = 0.5
-6-12小时：增加，Ping Pressure = 0.8
-12小时+：强主动，Ping Pressure = 1.0
-
-计算公式：
-ShouldPing = PingPressure × TopicHotness × UrgencyFactor
-
-UrgencyFactor:
-- 目标快到期：×1.5
+Urgency权重：
+- 目标临近：×1.5
 - 健康提醒：×1.3
 - 随机关怀：×0.8
 ```
 
-### 3. Morning Briefing（晨间简报）
+## Pre-Trigger安全检查
+
+每次主动触发前必须全部通过：
 
 ```
-每天早上07:00-09:00，生成晨间简报：
-
-🌅 晨间简报
-├── 今日目标：X个待办
-├── 昨日进展：（从narrative提取）
-├── 热点追踪：（Top 3 Interest Graph）
-└── 风险提示：（如有未解决的重要问题）
-
-触发条件：
-- 用户首次在07:00-09:00主动发消息
-- 昨天有重要进展（从narrative提取）
-- Interest Graph有Emerging话题可推
+□ 时间窗口允许（07:00-22:00）
+□ 今日触发次数未超6次
+□ 距上次触发超过2小时
+□ 已查阅相关记忆上下文
+□ 非Focus模式
+□ SilenceIndex > 0.5 或 Urgency极高
 ```
-
-### 4. Recover Before Asking（先恢复再触发）
-
-```
-不要一触发就开口，先做功课：
-
-触发前必须检查：
-1. 最近相关对话是什么？（翻narrative）
-2. 用户上次关于这个话题说了什么？
-3. 用户对这个话题的态度/情绪是什么？
-
-找到答案后再触发，而不是：
-❌ "关于这个话题，想聊聊吗？"
-
-而是：
-✅ "看到你最近在研究AI工具，昨天你也提到了供应链...
-你现在对这个方向有新想法吗？"
-```
-
-### 5. Pre-Trigger检查清单
-
-```
-在发送任何主动消息前，必须确认：
-
-□ 不是深夜（22:00-07:00）
-□ 今天trigger budget未用完（每天最多6次）
-□ 距上次trigger超过2小时
-□ 不是focus mode
-□ 已做Recover Before Asking
-□ Ping Pressure > 0.5 或 极高Urgency
 
 全部通过才触发，任意一项失败则等待。
-```
 
 ## 触发类型
 
-| 类型 | 说明 | Urgency | 典型场景 |
-|------|------|---------|---------|
-| `morning_briefing` | 晨间简报 | 0.7 | 07:00-09:00首次互动 |
-| `topic_hot` | 话题正热 | 0.6 | Interest Graph Hot触发 |
-| `deadline_approach` | 目标临近 | 1.5 | 目标deadline < 24h |
-| `health_check` | 健康关怀 | 1.3 | 睡眠不足/很久没运动 |
-| `milestone_reach` | 里程碑达成 | 1.0 | Breakthrough信号 |
-| `contradiction_note` | 矛盾提醒 | 0.8 | 发现言行不一 |
-| `opportunity_share` | 商机分享 | 0.9 | 发现相关机会 |
-| `gentle_care` | 温和关怀 | 0.5 | Ping Pressure > 0.8 |
+| 类型 | 触发窗口 | 权重 | 说明 |
+|------|---------|------|------|
+| `daily_summary` | 07:00-09:00首次 | 0.7 | 每日简报 |
+| `topic_pulse` | 随时 | 0.6 | 话题正热 |
+| `deadline_approach` | 随时 | 1.5 | 目标临近 |
+| `health_guardian` | 09:00-18:00 | 1.3 | 健康守护 |
+| `milestone_reach` | 随时 | 1.0 | 达成里程碑 |
+| `quiet_care` | 18:00-22:00 | 0.5 | 夜间关怀 |
+| `opportunity_signal` | 随时 | 0.9 | 发现机会 |
 
-## 触发状态管理
+## 每日简报机制
+
+每天07:00-09:00用户首次互动时生成：
+
+```
+🌅 今日速览
+├── 今日目标：X个待办
+├── 昨日亮点：从记忆提取
+├── 话题追踪：Top3热门话题
+└── 温馨提示：（如健康提醒）
+```
+
+**生成条件：**
+- 用户首次在07:00-09:00发消息
+- 或InterestGraph有Emerging话题可推
+- 非Focus模式
+
+## 触发前必做：记忆回溯
+
+**在开口之前，先查记忆：**
+
+```
+❌ 盲目触发
+"关于AI应用，想聊聊吗？"
+
+✅ 上下文触发
+"看你最近在研究供应链优化，
+这是昨天讨论的延续。
+有新进展吗？"
+```
+
+**回溯清单：**
+1. 用户上次关于这个话题说了什么？
+2. 用户对这个话题的态度/情绪是什么？
+3. 相关的已决事项是什么？
+
+## 话题状态管理
 
 ```json
 {
@@ -138,18 +127,33 @@ UrgencyFactor:
   "used_today": 2,
   "last_trigger": "2026-04-01T10:00:00+08:00",
   
-  "interest_graph": {
-    "产品研发": { "state": "🔥Hot", "mentions": 5, "lastMention": "2026-04-01T09:30:00", "pings_today": 0 },
-    "内容运营": { "state": "🌱Emerging", "mentions": 2, "lastMention": "2026-03-31T22:00:00", "pings_today": 0 },
-    "健康管理": { "state": "❄️Dormant", "mentions": 0, "lastMention": "2026-03-20T00:00:00", "pings_today": 0 }
+  "topic_registry": {
+    "供应链优化": { 
+      "state": "活跃", 
+      "mentions": 5, 
+      "last_at": "2026-04-01T09:30:00", 
+      "pings_today": 0 
+    },
+    "产品策略": { 
+      "state": "浮现", 
+      "mentions": 2, 
+      "last_at": "2026-03-31T22:00:00", 
+      "pings_today": 0 
+    },
+    "健康运动": { 
+      "state": "休眠", 
+      "mentions": 0, 
+      "last_at": "2026-03-20T00:00:00", 
+      "pings_today": 0 
+    }
   },
   
-  "ping_pressure": 0.6,
+  "silence_index": 0.6,
   "last_active": "2026-04-01T10:00:00",
   
-  "morning_briefing_done": false,
+  "daily_summary_done": false,
   "cooldowns": {
-    "goal_based": "2026-04-01T08:00:00",
+    "goal_track": "2026-04-01T08:00:00",
     "health_check": "2026-04-01T08:00:00"
   }
 }
@@ -157,87 +161,79 @@ UrgencyFactor:
 
 ## 时间窗口
 
-| 时间 | 可触发 | 类型 |
+| 时段 | 可触发 | 类型 |
 |------|--------|------|
-| 07:00-09:00 | ✅ | Morning Briefing |
+| 07:00-09:00 | ✅ | 每日简报优先 |
 | 09:00-12:00 | ✅ | 全类型 |
-| 12:00-14:00 | ⚠️ | 简短关怀 |
+| 12:00-14:00 | ⚠️ | 仅简短关怀 |
 | 14:00-18:00 | ✅ | 全类型 |
-| 18:00-22:00 | ✅ | Care类优先 |
+| 18:00-22:00 | ✅ | 关怀优先 |
 | 22:00-07:00 | ❌ | 从不触发 |
 
-## 触发消息格式
+## 触发消息原则
 
-### ✅ 正确格式
+**必须包含：**
+1. 触发原因（为什么现在说）
+2. 用户相关的上下文
+3. 开放式问题或具体价值
+
+**禁止：**
+- 无上下文的询问
+- 命令式语气
+- 封闭式问题（除非紧急）
+
+**示例：**
 
 ```
-[为什么现在说] + [用户相关上下文] + [开放式问题]
+✅ 正确
+"看你最近在研究供应链优化，
+这是昨天讨论的延续。
+有新进展吗？"
 
-示例（Recover Before Asking）：
-"看到你今天谈到了某个领域整合的问题，
-昨天你也提到想找个切入点。
-我找到一个相关的案例，要分享吗？"
+❌ 错误
+"供应链优化很重要，要继续关注啊"
+"关于这个话题，想聊聊吗？"
 ```
 
-### ❌ 错误格式
+## 协作信号
 
-```
-[命令式] / [无上下文] / [封闭式问题]
+### 接收（via proactive-engine）
 
-❌ "AI很重要，要继续关注啊"
-❌ "关于创业，想聊聊吗？"
-❌ "目标'[某个重要目标]'进展如何？"
-```
+| 信号 | 动作 |
+|------|------|
+| `breakthrough` | 里程碑达成，触发庆祝 |
+| `frustration` | 用户卡住，降低预期+支持 |
+| `goal_near` | 更新目标状态 |
 
-## 与其他Skill协作
-
-### 接收信号（via proactive-engine）
-
-| 信号 | 触发动作 |
-|------|---------|
-| `breakthrough` | 庆祝+推进下一个里程碑 |
-| `frustration` | 温和支持+降低预期 |
-| `goal_progress` | 更新Interest Graph热度 |
-| `context_update` | 重新计算Ping Pressure |
-
-### 发布信号
+### 发布
 
 ```
 Tool: signal_publish
 Params:
-  type: "trigger_sent"
-  payload: { trigger_type, topic, message_excerpt }
+  type: "assistant_triggered"
+  payload: { type, topic, message_id }
 ```
 
-## 自我学习
+## 自我调优
 
-### 接受 vs 拒绝
-
-```
-用户回复 → 接受 → acceptedStreak[type]++
-  → acceptedStreak >= 3 → 提高这类触发的Ping Pressure权重
-
-用户无回应/拒绝 → rejectedStreak[type]++
-  → rejectedStreak >= 3 → 这类话题沉默24小时
-```
-
-### Interest Graph更新
+### 接受 vs 忽略
 
 ```
-每次用户主动提及话题 → mentions++
-  → mentions >= 3 → state = "🔥Hot"
-  → 3天内 < 3次 → state = "🌱Emerging"
-  → 7天内 0次 → state = "❄️Dormant"
+用户回复 → acceptedStreak++
+  → 连续3次接受 → 提高这类触发权重
+
+用户忽略/拒绝 → rejectedStreak++
+  → 连续3次忽略 → 该话题沉默24小时
 ```
 
-## 融合竞品思路
+### 话题状态自动演化
 
-| 竞品 | 思路来源 |
-|------|---------|
-| proactive-companion | Interest Graph + Ping Pressure + Morning Briefing |
-| self-improving-proactive | Recover Before Asking |
-| proactive-agent-lite | Pre-Trigger检查清单 |
+```
+mentions >= 3 → 休眠→浮现 或 浮现→活跃
+mentions = 0 且7天未提 → 自动进入休眠
+用户主动提及 → 从休眠激活为浮现
+```
 
 ---
 
-**Tags:** soul, system, proactive, interest-graph, ping-pressure, morning-briefing
+**Tags:** soul, system, proactive, topic-tracker, silence-index, daily-summary
