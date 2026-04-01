@@ -47,14 +47,13 @@ async function callTool(tool, params) {
   return { ok: true, tool, params };
 }
 
-// ===== 模拟数据（实际环境将从API获取）=====
+// ===== 模拟数据（API不可用时备用）=====
 function loadMockData() {
   return {
     goals: [
       { id: 'core-1', name: '帮助用户实现长期福祉', description: '优先考虑用户的长期利益而非短期便利', priority: 10, status: 'active', progress: 65, type: 'core' },
       { id: 'core-2', name: '持续优化自身能力', description: '通过反思和用户反馈不断改进响应质量', priority: 8, status: 'active', progress: 45, type: 'core' },
-      { id: 'core-3', name: '维护与用户的信任关系', description: '保持诚实透明，尊重用户隐私', priority: 9, status: 'active', progress: 80, type: 'core' },
-      { id: 'user-1', name: '学英语', description: '每天背单词30分钟', priority: 7, status: 'active', progress: 30, type: 'user' }
+      { id: 'core-3', name: '维护与用户的信任关系', description: '保持诚实透明，尊重用户隐私', priority: 9, status: 'active', progress: 80, type: 'core' }
     ],
     signals: [
       { type: 'breakthrough', count: 5, trend: '+2' },
@@ -229,10 +228,14 @@ async function refreshData() {
   btn.classList.add('loading');
   
   try {
-    // 实际环境中从API获取
-    // const data = await api('/api/soul/status');
-    // 暂时用模拟数据
-    const data = loadMockData();
+    // 优先从真实API获取
+    let data = await fetchRealData();
+    
+    // 如果API不可用，使用模拟数据
+    if (!data) {
+      data = loadMockData();
+      state.apiConnected = false;
+    }
     
     state = { ...state, ...data, lastUpdate: new Date() };
     
@@ -254,7 +257,7 @@ async function refreshData() {
     renderSuggestions(data.suggestions);
     
     // 更新连接状态
-    updateConnectionStatus(true);
+    updateConnectionStatus(state.apiConnected);
     
   } catch (e) {
     console.error('Refresh error:', e);
