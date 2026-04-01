@@ -32,8 +32,8 @@ async function api(endpoint, options = {}) {
 
 // 尝试从真实API获取数据
 async function fetchRealData() {
-  const status = await api('/api/soul/status');
-  if (status) {
+  const status = await api('/plugins/soul/status');
+  if (status && !status.error) {
     state.apiConnected = true;
     return status;
   }

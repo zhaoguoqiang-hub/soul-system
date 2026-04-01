@@ -67,30 +67,39 @@ const goalManager = new GoalManager();
 
 // ===== HTTP API 路由（供控制面板调用）=====
 function registerApiRoutes(api: any) {
+  // 统一使用 /plugins/soul/ 前缀，auth: "plugin", match: "prefix"
+  
   // 获取所有目标
   api.registerHttpRoute({
-    method: "GET",
-    path: "/api/soul/goals",
-    handler: async () => {
+    path: "/plugins/soul/goals",
+    auth: "plugin",
+    match: "prefix",
+    handler: async (_req: any, res: any) => {
       const goals = goalManager.loadGoals();
-      return { goals, updatedAt: new Date().toISOString() };
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify({ goals, updatedAt: new Date().toISOString() }));
+      return true;
     }
   });
   
   // 获取活跃目标
   api.registerHttpRoute({
-    method: "GET",
-    path: "/api/soul/goals/active",
-    handler: async () => {
-      return goalManager.getActiveGoals();
+    path: "/plugins/soul/goals-active",
+    auth: "plugin",
+    match: "prefix",
+    handler: async (_req: any, res: any) => {
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify(goalManager.getActiveGoals()));
+      return true;
     }
   });
   
   // 获取信号统计
   api.registerHttpRoute({
-    method: "GET",
-    path: "/api/soul/signals",
-    handler: async () => {
+    path: "/plugins/soul/signals",
+    auth: "plugin",
+    match: "prefix",
+    handler: async (_req: any, res: any) => {
       ensureDir(SIGNALS_DIR);
       const pendingFile = join(SIGNALS_DIR, "pending.jsonl");
       const processedDir = join(PROCESSED_DIR, getToday() + ".jsonl");
@@ -112,26 +121,28 @@ function registerApiRoutes(api: any) {
         }).filter(Boolean);
       }
       
-      // 统计各类型数量
       const stats: Record<string, number> = {};
       const allSignals = [...processedToday, ...pending];
       for (const s of allSignals) {
         stats[s.type] = (stats[s.type] || 0) + 1;
       }
       
-      return {
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify({
         stats: Object.entries(stats).map(([type, count]) => ({ type, count })),
         pending,
         processedToday: processedToday.length
-      };
+      }));
+      return true;
     }
   });
   
   // 获取叙事记忆
   api.registerHttpRoute({
-    method: "GET",
-    path: "/api/soul/narratives",
-    handler: async () => {
+    path: "/plugins/soul/narratives",
+    auth: "plugin",
+    match: "prefix",
+    handler: async (_req: any, res: any) => {
       ensureDir(MEMORY_DIR);
       const narrativeFile = join(MEMORY_DIR, "narrative.jsonl");
       let narratives: any[] = [];
@@ -143,15 +154,18 @@ function registerApiRoutes(api: any) {
         }).filter(Boolean).reverse();
       }
       
-      return { narratives, total: narratives.length };
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify({ narratives, total: narratives.length }));
+      return true;
     }
   });
   
   // 获取上下文摘要
   api.registerHttpRoute({
-    method: "GET",
-    path: "/api/soul/context",
-    handler: async () => {
+    path: "/plugins/soul/context",
+    auth: "plugin",
+    match: "prefix",
+    handler: async (_req: any, res: any) => {
       const context = readDailyContext();
       const sharedFile = join(SOUL_DIR, "shared-context.json");
       let shared: any = {};
@@ -160,19 +174,21 @@ function registerApiRoutes(api: any) {
         try { shared = JSON.parse(readFileSync(sharedFile, "utf-8")); } catch {}
       }
       
-      return { ...context, shared };
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify({ ...context, shared }));
+      return true;
     }
   });
   
   // 获取系统状态（综合）
   api.registerHttpRoute({
-    method: "GET",
-    path: "/api/soul/status",
-    handler: async () => {
+    path: "/plugins/soul/status",
+    auth: "plugin",
+    match: "prefix",
+    handler: async (_req: any, res: any) => {
       const goals = goalManager.getActiveGoals();
       const context = readDailyContext();
       
-      // 获取叙事数量
       ensureDir(MEMORY_DIR);
       const narrativeFile = join(MEMORY_DIR, "narrative.jsonl");
       let narrativeCount = 0;
@@ -180,33 +196,35 @@ function registerApiRoutes(api: any) {
         narrativeCount = readFileSync(narrativeFile, "utf-8").split("\n").filter(Boolean).length;
       }
       
-      // 获取高频话题
-      const topTopics = context.topTopics || [];
-      
-      return {
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify({
         goals: goals.map(g => ({ id: g.id, name: g.name, priority: g.priority, progress: g.progress, type: g.type })),
         mood: context.userMood || "neutral",
-        topTopics,
+        topTopics: context.topTopics || [],
         narrativeCount,
         lastCheck: context.lastProactiveCheck ? new Date(context.lastProactiveCheck).toISOString() : null
-      };
+      }));
+      return true;
     }
   });
   
   // Agent预留接口
   api.registerHttpRoute({
-    method: "GET",
-    path: "/api/agents/status",
-    handler: async () => {
-      return {
+    path: "/plugins/soul/agents",
+    auth: "plugin",
+    match: "prefix",
+    handler: async (_req: any, res: any) => {
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify({
         agents: [
           { id: "proactive-engine", name: "主动引擎", status: "running", lastActive: new Date().toISOString() }
         ]
-      };
+      }));
+      return true;
     }
   });
   
-  api.logger.info("[proactive-engine] HTTP routes registered: /api/soul/*");
+  api.logger.info("[proactive-engine] HTTP routes registered: /plugins/soul/*");
 }
 
 function ensureDir(dir: string) {
