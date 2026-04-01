@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>灵魂系统 - 控制面板</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app">
+    <!-- 侧边栏 -->
+    <aside class="sidebar">
+      <div class="logo">
+        <div class="logo-icon">🐈‍⬛</div>
+        <div class="logo-text">
+          <span class="logo-title">灵魂系统</span>
+          <span class="logo-sub">Soul Engine</span>
+        </div>
+      </div>
+      
+      <nav class="nav">
+        <button class="nav-item active" data-tab="overview">
+          <span class="nav-icon">📊</span>
+          <span>总览</span>
+        </button>
+        <button class="nav-item" data-tab="goals">
+          <span class="nav-icon">🎯</span>
+          <span>目标</span>
+        </button>
+        <button class="nav-item" data-tab="signals">
+          <span class="nav-icon">📡</span>
+          <span>信号</span>
+        </button>
+        <button class="nav-item" data-tab="memory">
+          <span class="nav-icon">🧠</span>
+          <span>记忆</span>
+        </button>
+        <button class="nav-item" data-tab="agents" disabled>
+          <span class="nav-icon">🤖</span>
+          <span>子Agent <span class="badge-soon">soon</span></span>
+        </button>
+      </nav>
+      
+      <div class="sidebar-footer">
+        <div class="connection-status" id="connectionStatus">
+          <span class="status-dot"></span>
+          <span class="status-text">连接中...</span>
+        </div>
+      </div>
+    </aside>
+    
+    <!-- 主内容 -->
+    <main class="main">
+      <!-- 顶部 -->
+      <header class="header">
+        <h1 class="page-title" id="pageTitle">总览</h1>
+        <div class="header-actions">
+          <button class="btn-refresh" id="refreshBtn" title="刷新数据">
+            <span>🔄</span>
+          </button>
+        </div>
+      </header>
+      
+      <!-- 内容区 -->
+      <div class="content">
+        <!-- 总览 Tab -->
+        <div class="tab-content active" id="tab-overview">
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-icon">🎯</div>
+              <div class="stat-info">
+                <div class="stat-value" id="statGoalsActive">3</div>
+                <div class="stat-label">活跃目标</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon">📡</div>
+              <div class="stat-info">
+                <div class="stat-value" id="statSignalsToday">0</div>
+                <div class="stat-label">今日信号</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon">🧠</div>
+              <div class="stat-info">
+                <div class="stat-value" id="statNarratives">0</div>
+                <div class="stat-label">叙事记忆</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon">⚡</div>
+              <div class="stat-info">
+                <div class="stat-value" id="statMood">正常</div>
+                <div class="stat-label">当前状态</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="panel-section">
+            <h3 class="section-title">🎯 核心目标</h3>
+            <div class="goals-list" id="goalsListOverview">
+              <!-- JS渲染 -->
+            </div>
+          </div>
+          
+          <div class="panel-section">
+            <h3 class="section-title">💡 最近主动建议</h3>
+            <div class="suggestions-list" id="suggestionsList">
+              <div class="empty-state">暂无主动建议</div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 目标 Tab -->
+        <div class="tab-content" id="tab-goals">
+          <div class="panel-section">
+            <h3 class="section-title">核心目标 <span class="badge-lock">不可删除</span></h3>
+            <div class="goals-list" id="goalsListFull">
+              <!-- JS渲染 -->
+            </div>
+          </div>
+          
+          <div class="panel-section">
+            <div class="section-header">
+              <h3 class="section-title">自定义目标</h3>
+              <button class="btn-add" id="addGoalBtn">+ 添加目标</button>
+            </div>
+            <div class="goals-list" id="userGoalsList">
+              <div class="empty-state">暂无自定义目标</div>
+            </div>
+          </div>
+          
+          <div class="panel-section">
+            <h3 class="section-title">目标配置</h3>
+            <div class="config-form" id="addGoalForm" style="display:none;">
+              <input type="text" class="form-input" id="goalName" placeholder="目标名称">
+              <textarea class="form-input" id="goalDesc" placeholder="目标描述（可选）" rows="2"></textarea>
+              <div class="form-row">
+                <label class="form-label">优先级</label>
+                <input type="range" class="form-range" id="goalPriority" min="1" max="10" value="5">
+                <span class="range-value" id="priorityValue">5</span>
+              </div>
+              <div class="form-actions">
+                <button class="btn-secondary" id="cancelGoalBtn">取消</button>
+                <button class="btn-primary" id="confirmAddGoalBtn">确认添加</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 信号 Tab -->
+        <div class="tab-content" id="tab-signals">
+          <div class="panel-section">
+            <h3 class="section-title">📡 信号统计（今日）</h3>
+            <div class="signals-grid" id="signalsGrid">
+              <!-- JS渲染 -->
+            </div>
+          </div>
+          
+          <div class="panel-section">
+            <h3 class="section-title">待处理信号</h3>
+            <div class="signals-pending" id="signalsPending">
+              <div class="empty-state">暂无待处理信号</div>
+            </div>
+          </div>
+          
+          <div class="panel-section">
+            <h3 class="section-title">信号类型说明</h3>
+            <div class="signal-types">
+              <div class="signal-type">
+                <span class="signal-tag breakthrough">突破</span>
+                <span>完成、解决、做成</span>
+              </div>
+              <div class="signal-type">
+                <span class="signal-tag frustration">挫折</span>
+                <span>失败、卡住、报错</span>
+              </div>
+              <div class="signal-type">
+                <span class="signal-tag decision">决策</span>
+                <span>选择、决定、拍板</span>
+              </div>
+              <div class="signal-type">
+                <span class="signal-tag realization">认知</span>
+                <span>理解、发现、领悟</span>
+              </div>
+              <div class="signal-type">
+                <span class="signal-tag feedback">反馈</span>
+                <span>感谢、不满、情绪</span>
+              </div>
+              <div class="signal-type">
+                <span class="signal-tag transition">转换</span>
+                <span>休息、离开</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 记忆 Tab -->
+        <div class="tab-content" id="tab-memory">
+          <div class="panel-section">
+            <h3 class="section-title">🧠 记忆统计</h3>
+            <div class="memory-stats" id="memoryStats">
+              <!-- JS渲染 -->
+            </div>
+          </div>
+          
+          <div class="panel-section">
+            <h3 class="section-title">📝 最近叙事</h3>
+            <div class="narratives-list" id="narrativesList">
+              <div class="empty-state">暂无叙事记忆</div>
+            </div>
+          </div>
+          
+          <div class="panel-section">
+            <h3 class="section-title">🔥 高频话题</h3>
+            <div class="topics-list" id="topicsList">
+              <div class="empty-state">暂无话题数据</div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 子Agent Tab (预留) -->
+        <div class="tab-content" id="tab-agents">
+          <div class="empty-state-large">
+            <div class="empty-icon">🤖</div>
+            <div class="empty-title">子Agent监测</div>
+            <div class="empty-desc">即将推出...</div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+  
+  <script src="app.js"></script>
+</body>
+</html>

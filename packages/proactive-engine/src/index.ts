@@ -65,6 +65,150 @@ class GoalManager {
 }
 const goalManager = new GoalManager();
 
+// ===== HTTP API 路由（供控制面板调用）=====
+function registerApiRoutes(api: any) {
+  // 获取所有目标
+  api.registerHttpRoute({
+    method: "GET",
+    path: "/api/soul/goals",
+    handler: async () => {
+      const goals = goalManager.loadGoals();
+      return { goals, updatedAt: new Date().toISOString() };
+    }
+  });
+  
+  // 获取活跃目标
+  api.registerHttpRoute({
+    method: "GET",
+    path: "/api/soul/goals/active",
+    handler: async () => {
+      return goalManager.getActiveGoals();
+    }
+  });
+  
+  // 获取信号统计
+  api.registerHttpRoute({
+    method: "GET",
+    path: "/api/soul/signals",
+    handler: async () => {
+      ensureDir(SIGNALS_DIR);
+      const pendingFile = join(SIGNALS_DIR, "pending.jsonl");
+      const processedDir = join(PROCESSED_DIR, getToday() + ".jsonl");
+      
+      let pending: any[] = [];
+      let processedToday: any[] = [];
+      
+      if (existsSync(pendingFile)) {
+        const content = readFileSync(pendingFile, "utf-8");
+        pending = content.split("\n").filter(Boolean).map(line => {
+          try { return JSON.parse(line); } catch { return null; }
+        }).filter(Boolean);
+      }
+      
+      if (existsSync(processedDir)) {
+        const content = readFileSync(processedDir, "utf-8");
+        processedToday = content.split("\n").filter(Boolean).map(line => {
+          try { return JSON.parse(line); } catch { return null; }
+        }).filter(Boolean);
+      }
+      
+      // 统计各类型数量
+      const stats: Record<string, number> = {};
+      const allSignals = [...processedToday, ...pending];
+      for (const s of allSignals) {
+        stats[s.type] = (stats[s.type] || 0) + 1;
+      }
+      
+      return {
+        stats: Object.entries(stats).map(([type, count]) => ({ type, count })),
+        pending,
+        processedToday: processedToday.length
+      };
+    }
+  });
+  
+  // 获取叙事记忆
+  api.registerHttpRoute({
+    method: "GET",
+    path: "/api/soul/narratives",
+    handler: async () => {
+      ensureDir(MEMORY_DIR);
+      const narrativeFile = join(MEMORY_DIR, "narrative.jsonl");
+      let narratives: any[] = [];
+      
+      if (existsSync(narrativeFile)) {
+        const lines = readFileSync(narrativeFile, "utf-8").split("\n").filter(Boolean).slice(-50);
+        narratives = lines.map(line => {
+          try { return JSON.parse(line); } catch { return null; }
+        }).filter(Boolean).reverse();
+      }
+      
+      return { narratives, total: narratives.length };
+    }
+  });
+  
+  // 获取上下文摘要
+  api.registerHttpRoute({
+    method: "GET",
+    path: "/api/soul/context",
+    handler: async () => {
+      const context = readDailyContext();
+      const sharedFile = join(SOUL_DIR, "shared-context.json");
+      let shared: any = {};
+      
+      if (existsSync(sharedFile)) {
+        try { shared = JSON.parse(readFileSync(sharedFile, "utf-8")); } catch {}
+      }
+      
+      return { ...context, shared };
+    }
+  });
+  
+  // 获取系统状态（综合）
+  api.registerHttpRoute({
+    method: "GET",
+    path: "/api/soul/status",
+    handler: async () => {
+      const goals = goalManager.getActiveGoals();
+      const context = readDailyContext();
+      
+      // 获取叙事数量
+      ensureDir(MEMORY_DIR);
+      const narrativeFile = join(MEMORY_DIR, "narrative.jsonl");
+      let narrativeCount = 0;
+      if (existsSync(narrativeFile)) {
+        narrativeCount = readFileSync(narrativeFile, "utf-8").split("\n").filter(Boolean).length;
+      }
+      
+      // 获取高频话题
+      const topTopics = context.topTopics || [];
+      
+      return {
+        goals: goals.map(g => ({ id: g.id, name: g.name, priority: g.priority, progress: g.progress, type: g.type })),
+        mood: context.userMood || "neutral",
+        topTopics,
+        narrativeCount,
+        lastCheck: context.lastProactiveCheck ? new Date(context.lastProactiveCheck).toISOString() : null
+      };
+    }
+  });
+  
+  // Agent预留接口
+  api.registerHttpRoute({
+    method: "GET",
+    path: "/api/agents/status",
+    handler: async () => {
+      return {
+        agents: [
+          { id: "proactive-engine", name: "主动引擎", status: "running", lastActive: new Date().toISOString() }
+        ]
+      };
+    }
+  });
+  
+  api.logger.info("[proactive-engine] HTTP routes registered: /api/soul/*");
+}
+
 function ensureDir(dir: string) {
   if (!existsSync(dir)) require("fs").mkdirSync(dir, { recursive: true });
 }
@@ -251,6 +395,9 @@ export default definePluginEntry({
   description: "soul-system的心跳引擎 + 信号协调中心",
   
   register(api) {
+    // 注册HTTP路由（供控制面板调用）
+    registerApiRoutes(api);
+    
     // ===== 目标管理工具（用户可自由配置）=====
     api.registerTool({
       name: "goal_configure",
