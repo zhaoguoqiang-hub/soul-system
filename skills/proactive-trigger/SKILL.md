@@ -94,11 +94,11 @@ UrgencyFactor:
 3. 用户对这个话题的态度/情绪是什么？
 
 找到答案后再触发，而不是：
-❌ "关于AI创业，想聊聊吗？"
+❌ "关于这个话题，想聊聊吗？"
 
 而是：
 ✅ "看到你最近在研究AI工具，昨天你也提到了供应链...
-你现在对AI创业的方向有新想法吗？"
+你现在对这个方向有新想法吗？"
 ```
 
 ### 5. Pre-Trigger检查清单
@@ -139,8 +139,8 @@ UrgencyFactor:
   "last_trigger": "2026-04-01T10:00:00+08:00",
   
   "interest_graph": {
-    "AI创业": { "state": "🔥Hot", "mentions": 5, "lastMention": "2026-04-01T09:30:00", "pings_today": 0 },
-    "自媒体": { "state": "🌱Emerging", "mentions": 2, "lastMention": "2026-03-31T22:00:00", "pings_today": 0 },
+    "产品研发": { "state": "🔥Hot", "mentions": 5, "lastMention": "2026-04-01T09:30:00", "pings_today": 0 },
+    "内容运营": { "state": "🌱Emerging", "mentions": 2, "lastMention": "2026-03-31T22:00:00", "pings_today": 0 },
     "健康管理": { "state": "❄️Dormant", "mentions": 0, "lastMention": "2026-03-20T00:00:00", "pings_today": 0 }
   },
   
@@ -174,7 +174,7 @@ UrgencyFactor:
 [为什么现在说] + [用户相关上下文] + [开放式问题]
 
 示例（Recover Before Asking）：
-"看到你今天谈到了AI创业供应链整合的问题，
+"看到你今天谈到了某个领域整合的问题，
 昨天你也提到想找个切入点。
 我找到一个相关的案例，要分享吗？"
 ```
@@ -186,7 +186,7 @@ UrgencyFactor:
 
 ❌ "AI很重要，要继续关注啊"
 ❌ "关于创业，想聊聊吗？"
-❌ "目标'还房贷'进展如何？"
+❌ "目标'[某个重要目标]'进展如何？"
 ```
 
 ## 与其他Skill协作

@@ -37,7 +37,7 @@ description: >
 {
   "profile": {
     "profession": { "value": "产品经理", "confidence": 0.95, "evidence": ["第1次:3月20日", "第2次:3月25日"], "contradictions": [] },
-    "focus_areas": { "value": ["AI创业", "自媒体"], "confidence": 0.8, "evidence": [], "contradictions": [] },
+    "focus_areas": { "value": ["产品研发", "内容运营"], "confidence": 0.8, "evidence": [], "contradictions": [] },
     "health": { "value": "睡眠不足", "confidence": 0.9, "evidence": ["自述:4月1日"], "contradictions": ["偶尔早睡"] }
   },
   "contradictions": [
@@ -70,7 +70,7 @@ description: >
 ```
 🔍 发现新模式，想确认一下：
 
-你说"AI创业很重要"，但在最近的对话中，
+你说"某个领域很重要"，但在最近的对话中，
 你没有问过任何关于AI的问题。
 
 这是为什么？
@@ -133,7 +133,7 @@ Params:
 ```
 👤 用户画像（置信度 > 0.7）
 ├── 职业：产品经理 95%
-├── 重心：AI创业 80%、自媒体 75%
+├── 重心：产品研发 80%、内容运营 75%
 ├── 健康：睡眠不足 90%（⚠️ 矛盾中）
 └── 价值观：家庭、创造、财务独立 85%
 
