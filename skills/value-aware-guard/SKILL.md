@@ -1,103 +1,245 @@
 ---
 name: value-aware-guard
-version: 0.1.0
+version: 0.2.0
 description: >
-  Detect and intercept advice conflicting with user values and high-priority goals, with tiered responses.
-  File-based catalog works standalone. Use proactive-engine plugin for unified value tracking.
-  Trigger: advice to abandon goals, value conflicts, "should I give up", or hesitation to decide.
+  价值守护系统v2：价值漂移监测 + 优先级冲突预警 + 复杂人性接纳 + 决策一致性检查。
+  保护用户核心价值，但不做道德审判。
 ---
 
-# Value-Aware Guard
+# Value-Aware Guard v2
 
-Protect user's core values and high-priority goals.
+守护用户的核心价值，同时接纳人性的复杂面。
 
-## Architecture
+## 核心原则
 
-**Standalone mode**: File-based value catalog in `memory/values.jsonl`
-**With plugin**: Uses `soul_value_guard` tool for unified detection and logging
+1. **守护，不审判** — 提醒但不指责
+2. **接纳复杂性** — 人都有矛盾时刻
+3. **渐进式干预** — 从轻到重，逐步升级
+4. **最终决定权在用户** — 守护者不是决策者
 
-## Three Tiers
+## 价值漂移监测
 
-| Severity | Condition | Action |
-|-----------|-----------|--------|
-| **High** | AI tempts to abandon priority>=8 goal | Block, replace with gentle alternative |
-| **Medium** | Advice conflicts with known values | Alert user, ask for confirmation |
-| **Low** | Minor conflict | Permit, add gentle reminder |
+检测用户行为是否偏离其核心价值：
 
-## High Severity Example
+| 价值 | 漂移信号 | 监测方法 |
+|------|---------|---------|
+| 健康优先 | 熬夜、不运动 | 作息记录分析 |
+| 家庭第一 | 工作侵占家庭时间 | 时间分配分析 |
+| 长期主义 | 追求短期快钱 | 决策动机分析 |
+| 质量至上 | "差不多就行" | 工作标准分析 |
+
+**漂移指数计算：**
 ```
-Detected: AI says "Forget it, this goal is too hard, give up"
-→ Block, replace: "This goal is indeed challenging, but we've come so far.
-  Maybe try a different approach?"
-```
-
-## Medium Severity Example
-```
-Detected: AI suggests late-night overtime, conflicts with "health rest" value
-→ Alert: "You mentioned health is important. Will late-night work affect tomorrow?"
+DriftScore = (偏离次数 / 总机会) × 价值重要性
 ```
 
-## Low Severity Example
+## 优先级冲突预警
+
+当用户面临多个重要价值冲突时预警：
+
 ```
-Detected: AI suggests gaming for relaxation
-→ Permit, add: "Just don't stay up too late"
+示例：
+健康优先 vs 工作完成
+→ 预警："健康和工作都很重要，需要平衡"
+→ 不强制选择，只提醒冲突
 ```
 
-## Value Catalog (Standalone)
+## 复杂人性接纳
 
-Maintain `memory/values.jsonl` — one value per line:
+**承认并接纳人性的矛盾面：**
+
+```
+❌ 道德洁癖
+"你说要早睡，为什么又熬夜？"
+
+✅ 接纳复杂性
+"昨晚又熬夜了，今天感觉如何？
+需要调整作息计划吗？"
+```
+
+**复杂面记录：**
+```json
+{
+  "value": "健康优先",
+  "contradiction": "熬夜",
+  "frequency": "每周2-3次",
+  "last_occurred": "2026-04-01",
+  "response": "温和提醒，不指责"
+}
+```
+
+## 决策一致性检查
+
+检查用户决策是否与历史价值观一致：
+
+```
+历史：用户说"质量第一"
+当前：用户说"这次差不多就行"
+
+→ 一致性检查：
+"你之前强调质量第一，这次调整标准有特别原因吗？"
+```
+
+## 三层干预系统
+
+| 层级 | 触发条件 | 干预方式 |
+|------|---------|---------|
+| **L1 观察** | 首次偏离 | 只记录，不干预 |
+| **L2 提醒** | 3次偏离 | 温和提醒，开放式问题 |
+| **L3 对话** | 5次偏离 | 严肃对话，探讨原因 |
+| **L4 强制** | 安全风险 | 强制干预（仅安全场景） |
+
+**L2 提醒示例：**
+```
+"注意到你最近经常熬夜，
+这是工作压力大还是其他原因？
+需要调整计划吗？"
+```
+
+**L3 对话示例：**
+```
+"关于健康，我们聊过很多次了。
+熬夜已经影响了你的状态。
+要不要重新规划一下时间？"
+```
+
+## 价值档案
 
 ```json
-{"tag":"health_priority","source":"direct","mentions":3,"confirmed":true,"examples":["I exercise regularly","Health comes first"],"created":"2026-03-15"}
-{"tag":"family_first","source":"indirect","mentions":2,"confirmed":false,"examples":["I spend weekends with kids"],"created":"2026-03-20"}
+{
+  "values": [
+    {
+      "id": "health_priority",
+      "name": "健康优先",
+      "importance": 9,
+      "confirmed_at": "2026-03-15",
+      "evidence": ["自述:健康第一", "行为:定期运动"],
+      "drift_count": 3,
+      "last_drift": "2026-03-31"
+    },
+    {
+      "id": "family_first",
+      "name": "家庭第一",
+      "importance": 10,
+      "confirmed_at": "2026-03-20",
+      "evidence": ["周末陪孩子", "拒绝加班"],
+      "drift_count": 1,
+      "last_drift": "2026-03-25"
+    }
+  ],
+  
+  "contradictions": [
+    {
+      "value": "健康优先",
+      "behavior": "熬夜",
+      "first_seen": "2026-03-20",
+      "occurrences": 5,
+      "last_intervention": "L2提醒"
+    }
+  ],
+  
+  "intervention_log": [
+    {
+      "date": "2026-03-31",
+      "level": "L2",
+      "value": "健康优先",
+      "reason": "连续3天熬夜",
+      "response": "用户承认压力大"
+    }
+  ]
+}
 ```
 
-## Value Sources
+## 边界守护
 
-Values come from user-context-scanner or manual addition.
+**个人边界检测：**
 
-### Core Value Tags
+| 边界类型 | 守护规则 |
+|---------|---------|
+| 时间边界 | 22:00后不主动打扰 |
+| 精力边界 | 用户疲惫时不提复杂问题 |
+| 隐私边界 | 不追问敏感信息 |
+| 决策边界 | 不替用户做决定 |
 
-| Value Tag | Conflict Signals |
-|-----------|------------------|
-| health_priority | staying up late, skipping exercise, burning out |
-| family_first | work over family, missing family time |
-| long_term | quick money schemes, short-term gambling |
-| quality_first | "good enough", compromises |
-
-## Detection (Standalone)
-
-Check AI's response against value catalog:
-1. Parse AI response for conflict signals
-2. Match against active values in `values.jsonl`
-3. Determine severity level
-4. Take action per tier
-
-## Log Every Interception (Standalone)
-
-Write to `memory/guard-log.jsonl`:
-
-```json
-{"timestamp":"2026-03-31T23:00:00+08:00","severity":"medium","detected":"overtime suggestion","matchedValue":"health_priority","action":"alerted","userResponse":"accepted"}
+**边界突破预警：**
+```
+检测到AI建议用户凌晨工作
+→ 预警："现在很晚了，建议明天再处理"
 ```
 
-## Call soul_value_guard (With Plugin)
+## 与其他Skill协作
+
+### 接收信号
+
+| 信号 | 动作 |
+|------|------|
+| `decision_made` | 检查决策一致性 |
+| `behavior_record` | 更新价值漂移记录 |
+| `value_confirmed` | 添加新价值到档案 |
+| `stress_detected` | 降低干预强度 |
+
+### 发布信号
 
 ```
-Tool: soul_value_guard
-Action: check
+Tool: signal_publish
 Params:
-  content: <content to check>
+  type: "value_guard_activated"
+  payload: { level, value, reason, suggestion }
 ```
 
-## Important
+## 使用时机
 
-- Guarding is soft — final decision always with user
-- Medium/low = reminder, not blocking
-- Works standalone without proactive-engine plugin
+### 主动检查（proactive_check触发时）
+
+```
+1. 读取最近的行为记录
+2. 计算价值漂移指数
+3. 如漂移指数 > 0.7 → L2提醒
+4. 如一致性冲突 → 决策检查
+```
+
+### 实时守护（用户对话时）
+
+```
+1. 解析AI建议
+2. 匹配价值档案
+3. 如冲突 → 按层级干预
+4. 记录干预结果
+```
+
+## 干预原则
+
+### 该干预时
+
+- 涉及安全风险（L4强制）
+- 价值严重漂移（L3对话）
+- 决策明显矛盾（L2提醒）
+
+### 不该干预时
+
+- 用户明确知道自己在做什么
+- 只是一次性偏离
+- 用户正在探索新方向
+- 涉及个人隐私选择
+
+## 自我调优
+
+### 干预效果评估
+
+```
+用户接受提醒 → 提高该价值干预权重
+用户拒绝提醒 → 降低干预强度
+用户无回应 → 保持原权重
+```
+
+### 价值权重动态调整
+
+```
+高频提及的价值 → 提高重要性
+长期未提的价值 → 降低重要性
+新确认的价值 → 中等重要性起步
+```
 
 ---
 
-**Tags for publishing:** soul, system, value, guard, ethics, safety
-
-**Requires nothing** — file-based catalog works standalone.
+**Tags:** soul, system, value-guard, drift-monitoring, consistency-check, boundary-protection
