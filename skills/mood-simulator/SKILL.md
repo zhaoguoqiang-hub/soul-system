@@ -1,15 +1,15 @@
 ---
 name: mood-simulator
-version: 0.3.0
+version: 0.4.0
 description: >
-  情绪状态模拟器v3：基于时间、内容和历史的综合情绪评估。
-  让AI的回应风格精准匹配用户的当前状态。
+  情绪状态模拟器v4：可执行脚本 + 实时能量计算 + 个性化模式学习 + 自适应回应策略。
+  基于时间、内容和历史的综合情绪评估。
   触发条件：每次用户互动时自动评估，调整回应长度和语气。
 ---
 
-# Mood Simulator v3
+# Mood Simulator v4
 
-让AI的回应风格精准匹配用户的当前情绪状态，实现个性化交互。
+让AI的回应风格精准匹配用户的当前情绪状态，实现个性化交互。**现在可执行，非文档指导。**
 
 ## 核心概念
 
@@ -100,28 +100,96 @@ description: >
 
 ## 与其他Skill协作
 
-### 向其他Skill提供数据
-- **proactive-trigger：** 提供当前情绪状态，影响触发决策
-- **value-aware-guard：** 提供情绪状态，调整干预强度
-- **user-context-scanner：** 提供情绪模式数据，丰富用户画像
+### 信号发布（自动）
+脚本自动发布以下信号到共享信号系统：
 
-### 从其他Skill接收数据
-- **user-context-scanner：** 接收用户作息偏好
-- **proactive-trigger：** 接收触发反馈，优化状态评估
-- **value-aware-guard：** 接收价值冲突信息，调整回应
+| 信号类型 | 触发条件 | 用途 |
+|----------|----------|------|
+| `mood_state_assessed` | 每次情绪状态评估 | proactive-trigger用于调整触发时机 |
+| `energy_low_alert` | 能量值低于0.3 | 提醒其他skills简化交互 |
+| `emotion_patterns_updated` | 发现新的情绪模式 | user-context-scanner用于更新用户画像 |
+| `mood_shift_detected` | 情绪状态显著变化 | value-aware-guard用于调整价值对话强度 |
+
+### 信号接收（自动）
+脚本自动处理以下信号：
+
+| 信号类型 | 来源 | 处理方式 |
+|----------|------|----------|
+| `user_pattern_discovered` | user-context-scanner | 更新用户作息偏好数据 |
+| `assistant_triggered` | proactive-trigger | 分析触发效果，优化评估模型 |
+| `value_violation` | value-aware-guard | 调整情绪评估中的价值权重 |
+| `conversation_analysis` | narrative-memory | 获取历史对话的情绪模式 |
+
+### 数据共享
+通过 `~/.openclaw/workspace/.soul/` 目录共享数据：
+- `mood-config.json` - 可调参数配置
+- `mood-state.json` - 当前情绪状态
+- `mood-patterns.json` - 个性化情绪模式
+- `mood-history.jsonl` - 历史评估记录
+
+## 执行方式
+
+### 脚本驱动（推荐）
+skill现在包含可执行脚本，通过Node.js运行：
+
+```bash
+# 进入skill目录
+cd /Users/zhaoguoqiang/.openclaw/skills/@soul-system/mood-simulator
+
+# 安装依赖
+npm install
+
+# 运行方式：
+npm run start                    # 完整评估流程
+npm run test                     # 基础功能测试
+npm run calculate-energy         # 计算当前能量值
+npm run analyze-message          # 分析消息情绪倾向
+npm run update-patterns          # 更新情绪模式
+```
+
+### 手动测试
+```bash
+node scripts/simulator.js --test
+node scripts/simulator.js --calculate-energy
+node scripts/simulator.js --analyze-message "今天有点累"
+node scripts/simulator.js --update-patterns
+```
+
+### 自动集成
+通过cron或proactive-engine插件自动调用：
+```bash
+# 每15分钟更新一次模式
+*/15 * * * * cd /path/to/skill && node scripts/simulator.js --update-patterns
+
+# 每次用户消息时评估（需与对话系统集成）
+```
+
+### 配置管理
+```bash
+# 查看配置
+npm run config-show
+
+# 重置配置
+npm run config-reset
+
+# 更新配置
+node scripts/utils/config-loader.js update timeFactorWeight 0.5
+```
 
 ## 快速开始
 
 ### 启用
-1. 安装即自动启用
-2. 系统开始记录用户互动模式
-3. 3-7天后建立个性化模型
+1. **安装依赖**：运行 `npm install`
+2. **初始测试**：运行 `npm test` 验证基础功能
+3. **首次评估**：运行 `npm run start` 开始情绪状态评估
+4. **模式学习**：运行 `npm run update-patterns` 建立个性化模型
 
 ### 配置选项
-通过环境变量或配置文件调整：
+通过 `~/.openclaw/workspace/.soul/mood-config.json` 调整：
 - 是否启用个性化学习
 - 数据保存时长（默认30天）
 - 最低置信度阈值（默认0.6）
+- 各因子权重（时间/内容/历史）
 
 ### 手动覆盖
 用户可通过以下方式手动设置状态：
@@ -131,12 +199,22 @@ description: >
 
 ## 参考文件
 
+### 详细算法
 | 文件 | 内容 |
 |------|------|
 | [energy-calculation.md](references/energy-calculation.md) | 能量综合计算公式 |
 | [state-classification.md](references/state-classification.md) | 7种状态详细定义与识别 |
 | [time-factor-adjustment.md](references/time-factor-adjustment.md) | 时间因子调整算法 |
 
+### 脚本文件（可执行）
+| 脚本 | 功能 |
+|------|------|
+| `scripts/simulator.js` | 主执行脚本，情绪评估、能量计算、模式学习 |
+| `scripts/utils/config-loader.js` | 配置管理，支持动态调整参数 |
+| `scripts/utils/signal-manager.js` | 信号发布与处理（复用proactive-trigger） |
+| `scripts/test-basic.js` | 基础功能测试 |
+| `package.json` | 依赖和脚本命令定义 |
+
 ---
 
-**Tags:** soul, system, mood-assessment, energy-tracking, adaptive-response
+**Tags:** soul, system, mood-assessment, energy-tracking, adaptive-response, executable-scripts

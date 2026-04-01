@@ -1,0 +1,23 @@
+{
+  "name": "@soul-system/mood-simulator",
+  "version": "0.4.0",
+  "type": "module",
+  "description": "Mood simulator v4 for soul-system - executable scripts for emotion state assessment and adaptive response",
+  "main": "scripts/simulator.js",
+  "scripts": {
+    "start": "node scripts/simulator.js",
+    "test": "node scripts/test-basic.js",
+    "test-simulation": "node scripts/simulator.js --test",
+    "calculate-energy": "node scripts/simulator.js --calculate-energy",
+    "analyze-message": "node scripts/simulator.js --analyze-message",
+    "update-patterns": "node scripts/simulator.js --update-patterns",
+    "config-show": "node scripts/utils/config-loader.js show",
+    "config-reset": "node scripts/utils/config-loader.js resetToDefaults"
+  },
+  "dependencies": {
+    "date-fns": "^3.6.0"
+  },
+  "keywords": ["soul-system", "mood-assessment", "emotion-simulation", "energy-tracking", "adaptive-response"],
+  "author": "soul-system",
+  "license": "MIT"
+}
