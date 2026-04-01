@@ -1,0 +1,278 @@
+/**
+ * OpenClaw工具调用模块
+ * 
+ * 提供与proactive-engine插件交互的工具函数
+ */
+
+import { execSync } from 'child_process';
+import { join } from 'path';
+
+const WORKSPACE = process.env.HOME ? join(process.env.HOME, '.openclaw/workspace') : '/tmp/.openclaw/workspace';
+
+/**
+ * 调用OpenClaw工具
+ * @param {string} toolName 工具名称
+ * @param {object} params 参数对象
+ * @returns {object} 工具执行结果
+ */
+export function callTool(toolName, params = {}) {
+  try {
+    // 构建命令参数
+    const paramString = Object.entries(params)
+      .map(([key, value]) => {
+        if (typeof value === 'boolean') {
+          return value ? `--${key}` : '';
+        } else if (value !== undefined && value !== null) {
+          return `--${key} "${String(value).replace(/"/g, '\\"')}"`;
+        }
+        return '';
+      })
+      .filter(Boolean)
+      .join(' ');
+    
+    const command = `openclaw tool ${toolName} ${paramString}`;
+    console.log(`执行命令: ${command}`);
+    
+    const output = execSync(command, { 
+      encoding: 'utf-8',
+      stdio: ['pipe', 'pipe', 'pipe'],
+      cwd: WORKSPACE
+    });
+    
+    try {
+      return JSON.parse(output);
+    } catch {
+      return { text: output };
+    }
+  } catch (error) {
+    console.error(`调用工具${toolName}失败:`, error.message);
+    if (error.stderr) {
+      console.error('错误输出:', error.stderr.toString());
+    }
+    return { error: error.message };
+  }
+}
+
+/**
+ * 发布信号
+ * @param {string} type 信号类型
+ * @param {object} payload 信号内容
+ * @param {string} priority 优先级 (high/medium/low)
+ * @returns {string} 信号ID
+ */
+export function publishSignal(type, payload, priority = 'medium') {
+  const result = callTool('signal_publish', {
+    type,
+    payload: JSON.stringify(payload),
+    priority
+  });
+  
+  if (result.error) {
+    console.error('发布信号失败:', result.error);
+    return null;
+  }
+  
+  // 从返回文本中提取信号ID
+  const match = result.text?.match(/信号已发布: (\S+)/);
+  return match ? match[1] : null;
+}
+
+/**
+ * 查询信号
+ * @param {string} type 筛选信号类型
+ * @param {string} source 筛选信号来源
+ * @returns {Array} 信号列表
+ */
+export function querySignals(type = null, source = null) {
+  const params = {};
+  if (type) params.type = type;
+  if (source) params.source = source;
+  
+  const result = callTool('signal_query', params);
+  
+  if (result.error) {
+    console.error('查询信号失败:', result.error);
+    return [];
+  }
+  
+  // 解析返回的文本（目前工具返回文本，未来可能返回JSON）
+  const text = result.text || '';
+  const lines = text.split('\n').filter(line => line.trim());
+  
+  if (lines.length <= 1) return [];
+  
+  // 跳过第一行（标题行）
+  const signals = [];
+  for (let i = 1; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (line.startsWith('•')) {
+      // 解析格式: • [source] type (priority)
+      const match = line.match(/• \[(\S+)\] (\S+) \((\S+)\)/);
+      if (match) {
+        signals.push({
+          source: match[1],
+          type: match[2],
+          priority: match[3]
+        });
+      }
+    }
+  }
+  
+  return signals;
+}
+
+/**
+ * 处理信号
+ * @param {string} signalId 信号ID
+ * @param {string} status 处理状态 (done/ignored)
+ * @returns {boolean} 是否成功
+ */
+export function resolveSignal(signalId, status = 'done') {
+  const result = callTool('signal_resolve', {
+    signalId,
+    status
+  });
+  
+  if (result.error) {
+    console.error('处理信号失败:', result.error);
+    return false;
+  }
+  
+  return result.text?.includes('信号已') || false;
+}
+
+/**
+ * 获取上下文
+ * @returns {object} 上下文数据
+ */
+export function getContext() {
+  const result = callTool('context_get', {});
+  
+  if (result.error) {
+    console.error('获取上下文失败:', result.error);
+    return {};
+  }
+  
+  try {
+    // 尝试解析JSON格式的返回
+    const text = result.text || '';
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      return JSON.parse(jsonMatch[0]);
+    }
+    return {};
+  } catch {
+    return {};
+  }
+}
+
+/**
+ * 更新上下文
+ * @param {string} key 键名
+ * @param {any} value 值
+ * @returns {boolean} 是否成功
+ */
+export function updateContext(key, value) {
+  const result = callTool('context_update', {
+    key,
+    value: JSON.stringify(value)
+  });
+  
+  if (result.error) {
+    console.error('更新上下文失败:', result.error);
+    return false;
+  }
+  
+  return result.text?.includes('上下文已更新') || false;
+}
+
+/**
+ * 获取目标建议
+ * @param {string} context 上下文描述
+ * @returns {object|null} 建议信息
+ */
+export function getGoalSuggestion(context = '') {
+  const result = callTool('goal_suggest', { context });
+  
+  if (result.error) {
+    console.error('获取目标建议失败:', result.error);
+    return null;
+  }
+  
+  const text = result.text || '';
+  
+  // 解析建议格式：💡 目标名\n原因: ...\n建议: ...
+  const lines = text.split('\n').map(line => line.trim()).filter(line => line);
+  
+  if (lines.length < 3) return null;
+  
+  const goalMatch = lines[0].match(/💡 (.+)/);
+  const reasonMatch = lines[1].match(/原因: (.+)/);
+  const suggestionMatch = lines[2].match(/建议: (.+)/);
+  
+  if (!goalMatch || !reasonMatch || !suggestionMatch) return null;
+  
+  return {
+    goal: goalMatch[1],
+    reason: reasonMatch[1],
+    suggestion: suggestionMatch[1]
+  };
+}
+
+/**
+ * 发送消息到会话（模拟）
+ * 实际实现需要OpenClaw的消息发送API
+ * @param {string} message 消息内容
+ * @returns {boolean} 是否成功
+ */
+export function sendMessage(message) {
+  console.log(`[消息发送] ${message}`);
+  
+  // 实际实现需要调用OpenClaw的消息发送接口
+  // 这里只是模拟，记录到日志文件
+  try {
+    const logPath = join(WORKSPACE, '.soul', 'trigger-messages.log');
+    const timestamp = new Date().toISOString();
+    const logEntry = `${timestamp} | ${message}\n`;
+    
+    const fs = require('fs');
+    fs.appendFileSync(logPath, logEntry, 'utf-8');
+    
+    // 同时发布一个反馈信号
+    publishSignal('assistant_triggered', {
+      message,
+      timestamp
+    }, 'low');
+    
+    return true;
+  } catch (error) {
+    console.error('记录消息失败:', error.message);
+    return false;
+  }
+}
+
+/**
+ * 检查proactive-engine插件是否可用
+ * @returns {boolean} 是否可用
+ */
+export function checkPluginAvailable() {
+  try {
+    // 尝试调用一个简单工具
+    const result = callTool('signal_query', {});
+    return !result.error;
+  } catch {
+    return false;
+  }
+}
+
+export default {
+  callTool,
+  publishSignal,
+  querySignals,
+  resolveSignal,
+  getContext,
+  updateContext,
+  getGoalSuggestion,
+  sendMessage,
+  checkPluginAvailable
+};

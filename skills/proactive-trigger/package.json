@@ -1,0 +1,24 @@
+{
+  "name": "@soul-system/proactive-trigger",
+  "version": "0.5.0",
+  "type": "module",
+  "description": "Proactive trigger engine v5 for soul-system - executable scripts with signal processing",
+  "main": "scripts/trigger.js",
+  "scripts": {
+    "start": "node scripts/trigger.js",
+    "test": "node scripts/test-basic.js",
+    "test-trigger": "node scripts/trigger.js --test",
+    "test-full": "node scripts/trigger.js",
+    "consume-signals": "node scripts/trigger.js --consume",
+    "calculate-score": "node scripts/trigger.js --calculate",
+    "update-state": "node scripts/trigger.js --update-state",
+    "config-show": "node scripts/utils/config-loader.js show",
+    "config-reset": "node scripts/utils/config-loader.js resetToDefaults"
+  },
+  "dependencies": {
+    "date-fns": "^3.6.0"
+  },
+  "keywords": ["soul-system", "proactive", "trigger", "openclaw", "executable-scripts"],
+  "author": "soul-system",
+  "license": "MIT"
+}

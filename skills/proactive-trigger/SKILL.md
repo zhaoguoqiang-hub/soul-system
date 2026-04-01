@@ -1,15 +1,22 @@
 ---
 name: proactive-trigger
-version: 0.4.0
+version: 0.5.0
 description: >
-  主动触发引擎v4：基于话题热度衰减模型 + 沉默等待指数 + 每日简报机制。
-  在对的时间说对的话，不打扰、不遗漏、有价值。
-  触发条件：用户长时间未互动、话题正热、目标临近、健康关怀时机。
+  主动触发引擎v5：可执行脚本 + 信号自动处理 + 实时状态管理。
+  基于话题热度衰减模型 + 沉默等待指数 + 每日简报机制。
+  触发条件：用户长时间未互动、话题正热、目标临近、健康关怀时机、待处理信号。
 ---
 
-# Proactive Trigger v4
+# Proactive Trigger v5
 
-让AI主动出现在用户需要的时候，而不是用户开口求助。
+让AI主动出现在用户需要的时候，而不是用户开口求助。**现在可执行，非文档指导。**
+
+## 核心原则
+
+1. **不打扰是底线** — 宁可不发，不能乱发
+2. **有上下文才触发** — 每次触发必须先查记忆
+3. **话题有生命周期** — 热门话题会自然冷却
+4. **沉默越久越主动** — 长时间不互动才提高权重
 
 ## 核心原则
 
@@ -116,36 +123,92 @@ TriggerScore = SilenceIndex × TopicHeat × Urgency × ContextRelevance
 
 ## 与其他Skill协作
 
-### 接收信号
-- `breakthrough` → 触发庆祝
-- `frustration` → 降低预期，温和支持
-- `goal_progress` → 更新目标状态
-- `user_tired` → 降低触发强度
+### 接收信号（自动处理）
+脚本自动消费并处理`~/.openclaw/workspace/.soul/signals/pending.jsonl`中的信号：
+- `breakthrough` → 触发庆祝（🎉 庆祝类型）
+- `frustration` → 提供支持（🤝 支持类型）
+- `decision` → 跟进询问（🔍 跟进类型）
+- `context_update` → 话题推送（💬 话题跟进）
+- `feedback` → 感谢回应（🙏 反馈处理）
 
 ### 发布信号
+触发后自动发布信号：
+```javascript
+// scripts/utils/openclaw-tools.js
+publishSignal('assistant_triggered', {
+  type: triggerType,
+  topic: signal.topic,
+  timestamp: new Date().toISOString(),
+  message: generatedMessage
+}, 'low');
 ```
-Tool: signal_publish
-Params:
-  type: "assistant_triggered"
-  payload: { type, topic, message_id }
+
+### 数据共享
+通过`~/.openclaw/workspace/.soul/`目录共享数据：
+- `trigger-state.json` - 触发状态和统计
+- `trigger-config.json` - 可调参数配置
+- `trigger-messages.log` - 历史触发记录
+
+## 执行方式
+
+### 脚本驱动（推荐）
+skill现在包含可执行脚本，通过Node.js运行：
+
+```bash
+# 进入skill目录
+cd /Users/zhaoguoqiang/.openclaw/skills/@soul-system/proactive-trigger
+
+# 安装依赖
+npm install
+
+# 运行方式：
+npm run start                    # 完整检查流程
+npm run consume-signals          # 消费并处理pending信号
+npm run test                     # 测试触发评分
+```
+
+### 手动测试
+```bash
+node scripts/trigger.js --test "健康提醒"
+node scripts/trigger.js --calculate
+node scripts/trigger.js --update-state
+```
+
+### 自动集成
+通过cron或proactive-engine插件自动调用：
+```bash
+# 每5分钟检查一次信号
+*/5 * * * * cd /path/to/skill && node scripts/trigger.js --consume
+```
+
+### 配置管理
+```bash
+# 查看配置
+node scripts/utils/config-loader.js show
+
+# 更新配置
+node scripts/utils/config-loader.js update timeWindows.morning.weight 0.8
 ```
 
 ## 快速开始
 
 ### 启用
 1. 安装proactive-engine插件
-2. 确保user-context-scanner运行以获取用户兴趣
-3. 系统自动开始监控和触发
+2. 安装skill依赖：`npm install`
+3. 测试运行：`npm test`
+4. 设置自动执行（推荐cron或插件集成）
 
 ### 配置
-通过`~/.openclaw/workspace/.soul/trigger-state.json`调整：
+通过`~/.openclaw/workspace/.soul/trigger-config.json`调整：
 - 每日最大触发次数（默认6）
 - 时间窗口偏好
 - 话题冷却时间
+- 评分阈值
 
 ### 禁用
 - 设置Focus模式暂停所有触发
 - 用户明确说"现在不要打扰"
+- 修改配置`processSignalsOnStartup: false`
 
 ## 参考文件
 
@@ -155,6 +218,14 @@ Params:
 | [silence-index-formula.md](references/silence-index-formula.md) | 沉默等待指数计算公式 |
 | [trigger-state-management.md](references/trigger-state-management.md) | 状态数据结构与管理规则 |
 
+### 脚本文件（可执行）
+| 脚本 | 功能 |
+|------|------|
+| `scripts/trigger.js` | 主执行脚本，处理信号和触发决策 |
+| `scripts/utils/openclaw-tools.js` | OpenClaw插件工具调用模块 |
+| `scripts/utils/config-loader.js` | 配置管理模块 |
+| `package.json` | 依赖和脚本命令定义 |
+
 ---
 
-**Tags:** soul, system, proactive, topic-tracker, silence-index, daily-summary
+**Tags:** soul, system, proactive, topic-tracker, silence-index, daily-summary, executable-scripts
