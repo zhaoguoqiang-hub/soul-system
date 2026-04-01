@@ -102,6 +102,39 @@ USER.md dynamic fields:
 - Profiles serve understanding, not data collection
 - Works standalone without proactive-engine plugin
 
+### With Signal Coordination (proactive-engine v0.6.0+)
+
+**Signals to Subscribe:**
+| Signal Type | Action |
+|-------------|--------|
+| `realization` | User learned something new → update focus areas |
+| `decision` | User made decision → update decision_style |
+| `feedback` | User expressed satisfaction → positive reinforcement |
+| `frustration` | User hit obstacle → update emotional patterns |
+
+**Implementation:**
+```
+1. When context updated: publish to shared context
+   Tool: context_update
+   Params: { key: "user_profile_hash", value: <hash of current profile> }
+
+2. Query for relevant signals to confirm understanding:
+   Tool: signal_query
+   Params: { type: ["realization", "decision", "feedback"] }
+
+3. When 3rd confirmation reached: notify value-guard
+   Tool: signal_publish
+   Params: { type: "value_confirmed", payload: { field, value, confidence: "high" } }
+
+4. Read shared context before writing to avoid conflicts:
+   Tool: context_get
+   → Check last user_profile_hash to detect changes
+```
+
+**Shared Context Keys:**
+- `user_profile_hash`: Detect profile changes from other skills
+- `topTopics`: Avoid duplicate context updates on same topic
+
 ---
 
 **Tags for publishing:** soul, system, user-profile, context, understanding
