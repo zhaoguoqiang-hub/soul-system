@@ -1,0 +1,106 @@
+{
+  "skills": {
+    "value-aware-guard": {
+      "description": "价值守护系统，监控价值漂移和边界违规",
+      "handles": [
+        "boundary_violation",
+        "value_drift_detected", 
+        "value_alignment_high",
+        "energy_low_alert",
+        "user_pattern_discovered",
+        "milestone_recorded"
+      ],
+      "publishes": [
+        "boundary_violation",
+        "value_drift_detected",
+        "intervention_triggered",
+        "value_alignment_high"
+      ],
+      "executable": "/Users/zhaoguoqiang/.openclaw/skills/@soul-system/value-aware-guard/scripts/guard.js",
+      "enabled": true
+    },
+    "narrative-memory": {
+      "description": "叙事记忆系统，捕获重要生命时刻",
+      "handles": [
+        "milestone_recorded",
+        "pattern_emerging",
+        "life_theme_identified",
+        "breakthrough",
+        "decision",
+        "realization",
+        "feedback",
+        "frustration",
+        "transition"
+      ],
+      "publishes": [
+        "milestone_recorded",
+        "pattern_emerging",
+        "life_theme_identified"
+      ],
+      "executable": "/Users/zhaoguoqiang/.openclaw/skills/@soul-system/narrative-memory/scripts/narrative.js",
+      "enabled": true
+    },
+    "mood-simulator": {
+      "description": "情绪模拟器，评估用户情绪状态",
+      "handles": [
+        "context_update",
+        "transition"
+      ],
+      "publishes": [
+        "mood_state_assessed",
+        "energy_low_alert"
+      ],
+      "enabled": true
+    },
+    "proactive-trigger": {
+      "description": "主动触发引擎，决定何时进行主动干预",
+      "handles": [
+        "boundary_violation",
+        "value_drift_detected",
+        "milestone_recorded",
+        "mood_state_assessed",
+        "user_pattern_discovered"
+      ],
+      "publishes": [
+        "assistant_triggered"
+      ],
+      "executable": "/Users/zhaoguoqiang/.openclaw/skills/@soul-system/proactive-trigger/scripts/trigger.js",
+      "enabled": true
+    },
+    "user-context-scanner": {
+      "description": "用户上下文扫描器，分析用户画像和模式",
+      "handles": [
+        "context_update",
+        "assistant_triggered"
+      ],
+      "publishes": [
+        "user_pattern_discovered",
+        "context_update"
+      ],
+      "enabled": true
+    }
+  },
+  "signal_types": {
+    "boundary_violation": "边界违规检测",
+    "value_drift_detected": "价值漂移检测",
+    "value_alignment_high": "价值高度对齐",
+    "intervention_triggered": "干预触发",
+    "milestone_recorded": "里程碑记录",
+    "pattern_emerging": "模式出现",
+    "life_theme_identified": "生命主题识别",
+    "mood_state_assessed": "情绪状态评估",
+    "energy_low_alert": "低能量警报",
+    "user_pattern_discovered": "用户模式发现",
+    "assistant_triggered": "助手触发",
+    "context_update": "上下文更新",
+    "breakthrough": "突破性进展",
+    "decision": "关键决策",
+    "realization": "认知领悟",
+    "feedback": "用户反馈",
+    "frustration": "挫折情绪",
+    "transition": "状态转换",
+    "question": "用户疑问"
+  },
+  "created_at": "2026-04-01T10:51:00.000Z",
+  "updated_at": "2026-04-01T10:51:00.000Z"
+}

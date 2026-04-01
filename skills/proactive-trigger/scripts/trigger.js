@@ -428,7 +428,8 @@ async function main() {
       test: { type: 'string', short: 't' },
       calculate: { type: 'boolean' },
       'update-state': { type: 'boolean' },
-      help: { type: 'boolean', short: 'h' }
+      help: { type: 'boolean', short: 'h' },
+      'process-signal': { type: 'string' }
     },
     allowPositionals: true
   });
@@ -446,12 +447,14 @@ Proactive Trigger 脚本
   -t, --test [topic]     测试指定话题的触发评分
   --calculate            计算当前综合触发评分
   --update-state         更新状态文件
+  --process-signal       处理单个信号（JSON格式）
   -h, --help             显示此帮助信息
 
 示例:
   node trigger.js --consume
   node trigger.js --test "健康提醒"
   node trigger.js --calculate
+  node trigger.js --process-signal '{"type":"mood_state_assessed",...}'
     `);
     return;
   }
@@ -468,6 +471,35 @@ Proactive Trigger 脚本
     const state = loadState();
     saveState(state);
     console.log('状态文件已更新');
+  } else if (values['process-signal']) {
+    try {
+      const signal = JSON.parse(values['process-signal']);
+      console.log(`处理信号: ${signal.type} [${signal.id}]`);
+      
+      // 处理信号逻辑
+      const state = loadState();
+      
+      // 根据信号类型处理
+      if (signal.type === 'mood_state_assessed') {
+        console.log(`情绪状态: ${signal.payload.state}, 能量: ${signal.payload.energy}`);
+        // 记录情绪状态用于触发决策
+        // 这里可以添加更多逻辑
+      }
+      
+      // 检查是否应该触发主动干预
+      const triggerScore = calculateTriggerScore(state);
+      console.log(`当前触发评分: ${triggerScore.toFixed(2)}`);
+      
+      if (triggerScore >= state.config.minTriggerScore) {
+        console.log('⚠️ 触发评分达到阈值，可能需要主动干预');
+      }
+      
+      // 保存状态
+      saveState(state);
+    } catch (error) {
+      console.error('处理信号失败:', error.message);
+    }
+    return;
   } else {
     // 默认执行完整检查
     console.log('执行完整触发检查...');

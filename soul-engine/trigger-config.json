@@ -1,0 +1,53 @@
+{
+  "maxDailyTriggers": 6,
+  "minTriggerIntervalHours": 2,
+  "timeWindows": {
+    "morning": {
+      "start": 7,
+      "end": 9,
+      "weight": 0.7,
+      "allowedTypes": [
+        "daily_summary",
+        "health_reminder"
+      ]
+    },
+    "workday": {
+      "start": 9,
+      "end": 18,
+      "weight": 1,
+      "allowedTypes": [
+        "all"
+      ]
+    },
+    "evening": {
+      "start": 18,
+      "end": 22,
+      "weight": 0.5,
+      "allowedTypes": [
+        "care",
+        "follow_up"
+      ]
+    },
+    "night": {
+      "start": 22,
+      "end": 7,
+      "weight": 0,
+      "allowedTypes": []
+    }
+  },
+  "topicCoolingDays": 7,
+  "minTopicHeat": 0.3,
+  "silenceIndexHalfLife": 24,
+  "minSilenceIndex": 0.3,
+  "minTriggerScore": 0.6,
+  "highPriorityThreshold": 0.8,
+  "processSignalsOnStartup": true,
+  "signalProcessingInterval": 300000,
+  "includeEmoji": true,
+  "maxMessageLength": 200,
+  "requireOpenEndedQuestion": true,
+  "learningEnabled": true,
+  "responseTrackingDays": 30,
+  "debugMode": false,
+  "logToFile": true
+}

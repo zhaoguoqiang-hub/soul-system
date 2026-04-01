@@ -1,0 +1,23 @@
+{
+  "name": "@soul-system/value-aware-guard",
+  "version": "0.4.0",
+  "type": "module",
+  "description": "Value-aware guard v4 for soul-system - executable scripts for value drift monitoring and ethical intervention",
+  "main": "scripts/guard.js",
+  "scripts": {
+    "start": "node scripts/guard.js",
+    "test": "node scripts/test-basic.js",
+    "test-guard": "node scripts/guard.js --test",
+    "check-boundaries": "node scripts/guard.js --check-boundaries",
+    "assess-value-drift": "node scripts/guard.js --assess-drift",
+    "update-values": "node scripts/guard.js --update-values",
+    "config-show": "node scripts/utils/config-loader.js show",
+    "config-reset": "node scripts/utils/config-loader.js resetToDefaults"
+  },
+  "dependencies": {
+    "date-fns": "^3.6.0"
+  },
+  "keywords": ["soul-system", "value-guard", "ethical-ai", "boundary-protection", "value-drift-monitoring"],
+  "author": "soul-system",
+  "license": "MIT"
+}

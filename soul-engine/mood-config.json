@@ -1,0 +1,82 @@
+{
+  "timeFactorWeight": 0.4,
+  "contentFactorWeight": 0.3,
+  "historyFactorWeight": 0.3,
+  "minConfidenceThreshold": 0.6,
+  "timeWindows": {
+    "morning": {
+      "start": 6,
+      "end": 9,
+      "baseEnergy": 0.7
+    },
+    "work_morning": {
+      "start": 9,
+      "end": 12,
+      "baseEnergy": 0.8
+    },
+    "lunch": {
+      "start": 12,
+      "end": 14,
+      "baseEnergy": 0.5
+    },
+    "work_afternoon": {
+      "start": 14,
+      "end": 18,
+      "baseEnergy": 0.7
+    },
+    "evening": {
+      "start": 18,
+      "end": 22,
+      "baseEnergy": 0.6
+    },
+    "night": {
+      "start": 22,
+      "end": 6,
+      "baseEnergy": 0.3
+    }
+  },
+  "contentAnalysisEnabled": true,
+  "emotionKeywords": {
+    "positive": [
+      "好",
+      "开心",
+      "完成",
+      "成功",
+      "顺利",
+      "谢谢",
+      "感谢"
+    ],
+    "negative": [
+      "累",
+      "困",
+      "烦",
+      "压力",
+      "问题",
+      "困难",
+      "不懂"
+    ],
+    "urgent": [
+      "急",
+      "马上",
+      "立刻",
+      "尽快",
+      "紧急"
+    ],
+    "tired": [
+      "累",
+      "困",
+      "疲惫",
+      "想睡",
+      "没精神"
+    ]
+  },
+  "historyDaysToConsider": 7,
+  "patternLearningRate": 0.1,
+  "minPatternSamples": 5,
+  "publishStateSignals": true,
+  "publishPatternSignals": true,
+  "publishEnergyAlerts": true,
+  "debugMode": false,
+  "logDetailedAnalysis": false,
+  "saveRawAssessments": true
+}

@@ -1,0 +1,28 @@
+{
+  "energy_curve": {
+    "description": "精力系数时间曲线（0-1），用于判断何时主动打扰强哥",
+    "zones": [
+      { "time": "06:00", "energy": 0.4, "label": "刚醒，有点迷糊" },
+      { "time": "08:00", "energy": 0.7, "label": "开始进入状态" },
+      { "time": "09:00", "energy": 0.85, "label": "黄金时间，适合深度工作" },
+      { "time": "12:00", "energy": 0.6, "label": "午餐后，有点困" },
+      { "time": "14:00", "energy": 0.75, "label": "下午状态回升" },
+      { "time": "18:00", "energy": 0.65, "label": "下班前，可能在收尾" },
+      { "time": "20:00", "energy": 0.8, "label": "晚间黄金时间" },
+      { "time": "22:00", "energy": 0.5, "label": "开始疲惫" },
+      { "time": "23:00", "energy": 0.3, "label": "深夜，不主动打扰" }
+    ]
+  },
+  "mood_indicators": {
+    "忙碌": ["嗯", "好", "忙", "回头再说"],
+    "疲惫": ["累", "困", "想睡了", "今天够呛"],
+    "开心": ["牛逼", "绝了", "可以", "不错"],
+    "烦躁": ["烦", "操", "这玩意", "怎么又"]
+  },
+  "action_rules": {
+    "heartbeat_max_per_day": 20,
+    "深夜_threshold": 23,
+    "清晨_threshold": 8,
+    "proactive_check_interval_hours": 2
+  }
+}

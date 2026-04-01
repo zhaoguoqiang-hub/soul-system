@@ -1,0 +1,25 @@
+{
+  "name": "@soul-system/narrative-memory",
+  "version": "0.3.0",
+  "type": "module",
+  "description": "Narrative memory v3 for soul-system - executable scripts for capturing meaningful life moments and constructing personal narratives",
+  "main": "scripts/narrative.js",
+  "scripts": {
+    "start": "node scripts/narrative.js",
+    "test": "node scripts/test-basic.js",
+    "process-text": "node scripts/narrative.js --process-text",
+    "analyze-daily": "node scripts/narrative.js --analyze-daily",
+    "process-daily": "node scripts/process-daily.js",
+    "timeline": "node scripts/narrative.js --timeline",
+    "patterns": "node scripts/narrative.js --patterns",
+    "config-show": "node scripts/utils/config-loader.js show",
+    "config-reset": "node scripts/utils/config-loader.js resetToDefaults"
+  },
+  "dependencies": {
+    "date-fns": "^3.6.0",
+    "natural": "^6.11.2"
+  },
+  "keywords": ["soul-system", "narrative-memory", "life-logging", "pattern-recognition", "memory-system"],
+  "author": "soul-system",
+  "license": "MIT"
+}

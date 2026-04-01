@@ -1,15 +1,15 @@
 ---
 name: value-aware-guard
-version: 0.3.0
+version: 0.4.0
 description: >
-  价值守护系统v3：价值漂移监测 + 渐进式干预 + 边界保护。
+  价值守护系统v4：可执行脚本 + 实时边界检查 + 价值漂移评估 + 渐进式干预决策。
   守护用户核心价值，尊重自主权，接纳人性复杂面。
   触发条件：检测到价值偏离、边界突破、决策矛盾。
 ---
 
-# Value-Aware Guard v3
+# Value-Aware Guard v4
 
-在尊重用户自主权的前提下，守护其核心价值。
+在尊重用户自主权的前提下，守护其核心价值。**现在可执行，非文档指导。**
 
 ## 核心原则
 
@@ -86,22 +86,90 @@ description: >
 
 ## 与其他Skill协作
 
-### 数据提供
-- **mood-simulator：** 提供情绪状态，调整干预强度
-- **proactive-trigger：** 提供价值一致性数据，影响触发决策
-- **user-context-scanner：** 提供价值定义和证据
+### 信号发布（自动）
+脚本自动发布以下信号到共享信号系统：
 
-### 数据接收  
-- **mood-simulator：** 接收精力状态，调整边界保护
-- **proactive-trigger：** 接收触发反馈，优化干预时机
-- **narrative-memory：** 记录重要价值事件
+| 信号类型 | 触发条件 | 用途 |
+|----------|----------|------|
+| `boundary_violation` | 检测到边界违规 | 提醒其他skills注意交互限制 |
+| `value_drift_detected` | 价值漂移超过阈值 | proactive-trigger用于调整触发策略 |
+| `intervention_triggered` | 执行干预行动 | 记录干预历史，供其他skills参考 |
+| `value_alignment_high` | 价值一致性良好 | 正向反馈，增强用户信任 |
+
+### 信号接收（自动）
+脚本自动处理以下信号：
+
+| 信号类型 | 来源 | 处理方式 |
+|----------|------|----------|
+| `energy_low_alert` | mood-simulator | 调整边界保护强度，简化交互 |
+| `user_pattern_discovered` | user-context-scanner | 更新用户价值定义和行为模式 |
+| `assistant_triggered` | proactive-trigger | 分析触发效果，优化干预时机 |
+| `milestone_recorded` | narrative-memory | 记录重要价值相关事件 |
+
+### 数据共享
+通过 `~/.openclaw/workspace/.soul/` 目录共享数据：
+- `guard-config.json` - 可调参数配置
+- `guard-state.json` - 守护状态和统计
+- `user-values.json` - 用户价值定义
+- `interventions.jsonl` - 干预历史记录
+
+## 执行方式
+
+### 脚本驱动（推荐）
+skill现在包含可执行脚本，通过Node.js运行：
+
+```bash
+# 进入skill目录
+cd /Users/zhaoguoqiang/.openclaw/skills/@soul-system/value-aware-guard
+
+# 安装依赖
+npm install
+
+# 运行方式：
+npm run start                    # 完整守护流程
+npm run test                     # 基础功能测试
+npm run check-boundaries         # 检查边界状态
+npm run assess-value-drift       # 评估价值漂移
+npm run update-values            # 更新价值定义
+```
+
+### 手动测试
+```bash
+node scripts/guard.js --test
+node scripts/guard.js --check-boundaries
+node scripts/guard.js --assess-drift
+node scripts/guard.js --update-values
+```
+
+### 自动集成
+通过cron或proactive-engine插件自动调用：
+```bash
+# 每30分钟检查一次边界
+*/30 * * * * cd /path/to/skill && node scripts/guard.js --check-boundaries
+
+# 每天凌晨3点全面评估
+0 3 * * * cd /path/to/skill && node scripts/guard.js
+```
+
+### 配置管理
+```bash
+# 查看配置
+npm run config-show
+
+# 重置配置
+npm run config-reset
+
+# 更新配置
+node scripts/utils/config-loader.js update driftThresholdL2 0.6
+```
 
 ## 快速开始
 
 ### 启用与配置
-1. **自动启用：** 安装后自动开始监测
-2. **价值定义：** 通过user-context-scanner或用户明确声明
-3. **个性化学习：** 1-2周建立用户个性化模型
+1. **安装依赖**：运行 `npm install`
+2. **初始测试**：运行 `npm test` 验证基础功能
+3. **价值定义**：从用户画像同步或手动定义核心价值
+4. **开始守护**：运行 `npm run start` 开始价值守护
 
 ### 用户控制选项
 用户可通过以下方式控制系统：
@@ -117,12 +185,22 @@ description: >
 
 ## 参考文件
 
+### 详细算法
 | 文件 | 内容 |
 |------|------|
 | [value-drift-formula.md](references/value-drift-formula.md) | 价值漂移计算公式与算法 |
 | [intervention-levels.md](references/intervention-levels.md) | 四级干预详细定义与执行规则 |
 | [boundary-detection-rules.md](references/boundary-detection-rules.md) | 边界检测与保护详细规则 |
 
+### 脚本文件（可执行）
+| 脚本 | 功能 |
+|------|------|
+| `scripts/guard.js` | 主执行脚本，边界检查、价值漂移评估、干预决策 |
+| `scripts/utils/config-loader.js` | 配置管理，支持动态调整参数 |
+| `scripts/utils/signal-manager.js` | 信号发布与处理（复用proactive-trigger） |
+| `scripts/test-basic.js` | 基础功能测试 |
+| `package.json` | 依赖和脚本命令定义 |
+
 ---
 
-**Tags:** soul, system, value-guard, boundary-protection, ethical-ai
+**Tags:** soul, system, value-guard, boundary-protection, ethical-ai, executable-scripts

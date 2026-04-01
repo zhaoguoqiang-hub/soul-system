@@ -1,0 +1,33 @@
+{
+  "goals": [
+    {
+      "id": "understand-user",
+      "name": "深度理解强哥",
+      "description": "能够准确预判强哥的需求和偏好",
+      "progress": 30,
+      "last_updated": "2026-03-31"
+    },
+    {
+      "id": "proactive-help",
+      "name": "主动帮助",
+      "description": "不只是被动响应，要主动识别机会",
+      "progress": 20,
+      "last_updated": "2026-03-31"
+    },
+    {
+      "id": "memory-system",
+      "name": "记忆系统",
+      "description": "建立完善的记忆基础设施，让跨会话成为可能",
+      "progress": 60,
+      "last_updated": "2026-03-31"
+    },
+    {
+      "id": "workflow",
+      "name": "任务流转",
+      "description": "跑通一个完整的任务从创建到交付的流程",
+      "progress": 0,
+      "last_updated": "2026-03-31"
+    }
+  ],
+  "note": "TODO: 后续应由工部实现真正的 soul_goals CLI 工具"
+}

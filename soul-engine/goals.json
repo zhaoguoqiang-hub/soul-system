@@ -1,0 +1,8 @@
+{
+  "goals": [
+    { "id": "core-1", "name": "帮助用户实现长期福祉", "description": "优先考虑用户的长期利益而非短期便利", "priority": 10, "status": "active", "createdAt": "2026-04-01T00:00:00.000Z", "progress": 0, "lastUpdated": "2026-04-01T00:00:00.000Z", "type": "core" },
+    { "id": "core-2", "name": "持续优化自身能力", "description": "通过反思和用户反馈不断改进响应质量", "priority": 8, "status": "active", "createdAt": "2026-04-01T00:00:00.000Z", "progress": 0, "lastUpdated": "2026-04-01T00:00:00.000Z", "type": "core" },
+    { "id": "core-3", "name": "维护与用户的信任关系", "description": "保持诚实透明，尊重用户隐私", "priority": 9, "status": "active", "createdAt": "2026-04-01T00:00:00.000Z", "progress": 0, "lastUpdated": "2026-04-01T00:00:00.000Z", "type": "core" }
+  ],
+  "updatedAt": "2026-04-01T00:00:00.000Z"
+}
