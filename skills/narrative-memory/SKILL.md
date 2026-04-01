@@ -1,103 +1,172 @@
 ---
 name: narrative-memory
-version: 0.1.0
+version: 0.2.0
 description: >
-  Capture and weave meaningful moments into vivid narrative memories with time, emotion, and scene.
-  Works standalone or with proactive-engine plugin for enhanced storage and retrieval.
-  Trigger: milestone, decision, value judgment, emotional turning point, first-time experience, or reflection.
+  叙事记忆系统v2：捕捉生命中有意义的时刻，编织成连贯的个人叙事。
+  三层过滤确保记忆精华，支持模式识别和决策反思。
+  触发条件：里程碑事件、关键决策、价值判断、情感转折、首次体验、深度反思。
 ---
 
-# Narrative Memory System
+# Narrative Memory v2
 
-Let AI remember who you are, not what you said.
+让AI记住你是谁，而不仅仅是你说了什么。
 
-## Architecture
+## 核心理念
 
-**Standalone mode**: Writes to `memory/narrative.jsonl` (line-delimited JSON)
-**With plugin**: Uses `soul_narrative` tool for unified storage and retrieval
+叙事记忆是**有意义的生命片段捕捉**，不是对话日志。其价值在于从离散事件中发现模式、构建连贯性、保留决策精髓、支持个人成长。
 
-## Three-Layer Memory Design
+## 三层记忆设计
 
-### Layer 1: Ignore
-These don't deserve memory space:
-- Simple confirmations: "ok", "yes", "got it"
-- Small talk about weather, daily stuff
-- Repetitive factual Q&A
-- Date/time queries
+### Layer 1: 忽略层
+**不占用记忆空间的内容：**
+- 简单确认（"好"、"收到"）
+- 日常寒暄
+- 事实查询
+- 系统状态通知
 
-### Layer 2: Accumulate First
-Not important alone, but meaningful when repeated:
-- Same topic mentioned multiple times
-- Repeated emotional patterns (e.g., saying "tired" 3 times)
-- Habitual actions (e.g., discussing products every Friday)
+**原则：** 无信息量、无情感分量、无决策内容的内容直接忽略。
 
-**Do not write immediately**. Mark in context: "topic X mentioned for the Nth time"
+### Layer 2: 积累层
+**等待模式出现的内容：**
+- 重复提及的话题（3次阈值）
+- 重复的情绪表达（3次阈值）
+- 习惯性行为模式
+- 相似的价值倾向
 
-### Layer 3: Write Narrative Memory (Essence Only)
+**处理：** 标记和计数，不立即写入叙事，等待模式稳定。
 
-Trigger "write scene" for:
+### Layer 3: 叙事层
+**记录精华时刻：** 当事件满足六大触发信号之一时，写作叙事记忆。
 
-| Type | Signal | Why Remember |
-|------|--------|-------------|
-| Key decision | "I decided...", "Finally chose...", "Gave up..." | Remember decision logic |
-| Value judgment | "I think A is more important than B" | Build decision framework |
-| Emotional turn | "From...to..." | Understand emotional patterns |
-| Milestone | "Finally completed..." | Mark life nodes |
-| First time | "First time doing..." | Mark fresh experiences |
-| Regret/reflection | "I shouldn't have..." | Remember lessons |
+**详细指南：** 见 [references/narrative-guidelines.md](references/narrative-guidelines.md)
 
-## Storage (Standalone Mode)
+## 六大触发信号
 
-Write to `memory/narrative.jsonl` — one JSON object per line:
+### 1. 关键决策
+用户做出重要选择，体现决策逻辑和价值权衡。
 
+### 2. 价值判断  
+用户明确表达价值主张或原则立场。
+
+### 3. 情感转折
+情绪状态的明显变化或突破性情感体验。
+
+### 4. 里程碑
+重要成就达成或突破性进展。
+
+### 5. 第一次体验
+全新的经历或尝试。
+
+### 6. 反思与后悔
+从经验中学习或对过去的重新思考。
+
+## 叙事写作要素
+
+每个叙事记忆应包含：
+- **场景构建**：时间、环境、情感氛围
+- **核心提炼**：一句捕捉本质的核心陈述
+- **详细描述**：事件的具体经过
+- **影响分析**：短期和长期影响
+- **重要性评分**：0-1分，决定存储策略
+
+## 重要性管理与衰减
+
+### 重要性评分
+基于情感强度、决策影响、价值体现、模式代表性、独特性五个维度综合评分。
+
+### 衰减策略
+| 重要性分数 | 存储级别 | 衰减周期 |
+|-----------|---------|---------|
+| 0.0-0.3 | 可忽略 | 7天 |
+| 0.3-0.5 | 标准记录 | 30天 |
+| 0.5-0.7 | 详细记录 | 90天 |
+| 0.7-0.85 | 重点记录 | 180天 |
+| 0.85-1.0 | 永久保存 | 永久 |
+
+## 数据结构
+
+### 存储格式
 ```json
-{"timestamp":"2026-03-31T23:00:00+08:00","type":"decision","scene":"Friday 11pm, discussing product priority","vibe":"down but firm","core":"User experience matters more than features","impact":"Later became basis for cutting features","importance":0.8,"tags":["product","decision"]}
+{
+  "timestamp": "2026-03-31T23:00:00+08:00",
+  "type": "decision",
+  "title": "简洁描述",
+  "scene": "场景描述",
+  "core": "核心陈述",
+  "impact": "影响分析",
+  "importance": 0.82,
+  "tags": ["相关标签"]
+}
 ```
 
-**Fallback**: If file write fails, write to conversation context as note.
+### 完整数据结构
+见 [references/narrative-guidelines.md](references/narrative-guidelines.md) 中的完整示例。
 
-## Narrative Fragment Format
+## 工作流程
 
-Write as descriptive paragraph:
+### 1. 实时监测
+- 分析对话内容
+- 检测六大触发信号
+- 评估事件重要性
 
-```
-【Scene】
-Time: Friday 11pm
-Scene: Discussing product priority
-Vibe: Just finished reading user complaints, slightly down but firm
-Core: "User experience matters more than feature count"
-Impact: This judgment later became the basis for cutting features
-```
+### 2. 三层过滤
+- Layer 1：直接忽略无价值内容
+- Layer 2：积累潜在模式
+- Layer 3：写作精华叙事
 
-## Decay Curve (With Plugin)
+### 3. 写作与存储
+- 构建完整叙事场景
+- 计算重要性评分
+- 存储到叙事时间线
+- 标记相关标签
 
-When proactive-engine is installed:
-- < 0.5 importance: decays after 7 days
-- 0.5-0.7: decays after 30 days
-- >= 0.8: permanent
+### 4. 检索与使用
+- 相关决策时检索历史叙事
+- 模式识别时提供参考
+- 价值澄清时提供背景
+- 定期回顾强化重要记忆
 
-**Standalone**: No automatic decay. User can manually prune.
+## 与其他Skill协作
 
-## Call soul_narrative (With Plugin)
+### 数据提供
+- **user-context-scanner**：提供用户画像背景，丰富叙事理解
+- **value-aware-guard**：提供价值冲突和决策背景
+- **mood-simulator**：提供情感状态数据
+- **proactive-trigger**：接收触发反馈，优化叙事检测
 
-```
-Tool: soul_narrative
-Action: add
-Params:
-  event: <complete narrative fragment>
-  category: decision / emotion_change / milestone / preference / general
-  importance: 0.0-1.0 (determines decay speed)
-  tags: [<related tags>]
-```
+### 数据接收
+- **user-context-scanner**：提供历史叙事用于模式分析
+- **value-aware-guard**：提供价值形成历史
+- 所有skills：提供决策历史和经验教训
 
-## Integration
+## 快速开始
 
-- When recalled (with plugin): +0.05 importance (reinforcement)
-- When accumulated: notify proactive-trigger (topic X mentioned N times)
-- Standalone: maintain flag in context about repeated topics
+### 启用与配置
+1. **自动启用**：安装后自动开始监测
+2. **学习阶段**：初期可能较为保守，逐步学习用户重要性标准
+3. **个性化调整**：根据用户反馈调整触发敏感度
+
+### 用户控制
+用户可通过以下方式控制系统：
+- 查看叙事时间线
+- 修正或删除特定叙事
+- 调整重要性评分
+- 控制叙事记录范围
+- 导出叙事数据
+
+### 隐私保护
+- 所有叙事本地加密存储
+- 涉及他人信息自动脱敏
+- 用户完全控制数据访问
+- 不用于非直接相关分析
+
+## 参考文件
+
+| 文件 | 内容 |
+|------|------|
+| [narrative-guidelines.md](references/narrative-guidelines.md) | 详细写作规则、示例和数据结构 |
+| [templates.md](references/templates.md) | 常用叙事模板 |
 
 ---
 
-**Tags for publishing:** memory, narrative, soul, system, forgetting-curve, episodic-memory
-
-**Requires nothing** — works standalone without proactive-engine.
+**Tags:** soul, system, memory, narrative, life-logging, pattern-recognition
