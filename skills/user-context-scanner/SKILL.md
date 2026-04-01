@@ -1,142 +1,170 @@
 ---
 name: user-context-scanner
-version: 0.1.0
+version: 0.2.0
 description: >
-  Build and maintain dynamic user profiles that evolve through conversation, with three-confirmation upgrade rules.
-  Updates USER.md directly. Works standalone or with proactive-engine plugin.
-  Trigger: habits, preferences, values, profession, family, or self-descriptions.
+  用户画像扫描器 v2：主动挖掘记忆 + Quiz验证 + 矛盾检测 + 置信度评分。
+  Build and maintain dynamic user profiles through memory mining and interactive confirmation.
 ---
 
-# User Context Scanner
+# User Context Scanner v2
 
-Let USER.md evolve from static file to living profile.
+让AI真正"懂你"的画像系统：不是等用户说，而是主动挖掘+验证。
 
-## Architecture
+## 核心升级（相比v0.1）
 
-**Standalone mode**: Writes directly to USER.md
-**With plugin**: Uses `soul_context` tool for unified profile management
+| 功能 | v0.1 | v2 |
+|------|-------|-----|
+| 信息来源 | 用户主动说 | 主动挖掘记忆 |
+| 验证方式 | 3次确认 | Quiz互动验证 |
+| 置信度 | 无 | 0-100%评分 |
+| 矛盾检测 | 无 | 发现言行不一 |
 
-## Three-Confirmation Rule
-
-```
-1st mention → Potential preference (no guard trigger)
-2nd mention → Initial confirmation (starts influencing)
-3rd mention → Stable value (triggers value-guard)
-```
-
-Why 3 times: Single mentions may be emotional reactions. 3 times = true pattern.
-
-## Sources
-
-### Direct (User Said)
-- "I'm a product manager" → extract: profession
-- "I don't work on weekends" → extract: rest habit
-- "My wife's name is Fang" → extract: family
-
-### Indirect (AI Inferred)
-- 3 consecutive late-night sessions → infer: night owl
-- Repeated discussion of one topic → infer: current focus
-
-## Update Mechanism (Standalone)
-
-When user reveals preference → write directly to USER.md:
-
-```markdown
-## 动态画像 (auto-generated)
-
-### 职业
-- 产品经理 (revealed: 2026-03-31)
-
-### 作息习惯
-- 周末不工作 (mention count: 1/3, needs 2 more to confirm)
-```
-
-### Accumulation Upgrade
-```
-1st → Mark: potential_preference × 1
-2nd → Mark: potential_preference × 2 (initial confirmation)
-3rd → Upgrade to stable value, add to value-guard catalog
-```
-
-## Value Tag Mapping
-
-| User Says | Value Tag |
-|-----------|----------|
-| Health first / exercise | health_priority |
-| Family most important | family_first |
-| Long-term / no quick money | long_term |
-| Quality over compromise | quality_first |
-| Efficiency first | efficiency_first |
-
-**After 3 confirmations**, add to value-guard catalog.
-
-## Call soul_context (With Plugin)
+## 架构
 
 ```
-Tool: soul_context
-Action: add or merge
+记忆文件(narrative.jsonl)
+    ↓ 挖掘
+行为模式发现
+    ↓ Quiz验证
+置信度评分 → 稳定画像
+    ↓
+矛盾检测 → 矛盾报告
+```
+
+## 画像字段（含置信度）
+
+```json
+{
+  "profile": {
+    "profession": { "value": "产品经理", "confidence": 0.95, "evidence": ["第1次:3月20日", "第2次:3月25日"], "contradictions": [] },
+    "focus_areas": { "value": ["AI创业", "自媒体"], "confidence": 0.8, "evidence": [], "contradictions": [] },
+    "health": { "value": "睡眠不足", "confidence": 0.9, "evidence": ["自述:4月1日"], "contradictions": ["偶尔早睡"] }
+  },
+  "contradictions": [
+    { "field": "health", "conflict": "自述睡眠不足，但最近有2次23:00前睡觉" }
+  ],
+  "quiz_pending": [
+    { "question": "你说你喜欢直接简洁，但你最近经常问很多细节？", "field": "communication_style" }
+  ]
+}
+```
+
+## 挖掘机制
+
+### 从narrative.jsonl挖掘
+
+```
+读取最近的记忆条目 → 分析模式 → 发现偏好/习惯/特质
+
+优先级：
+1. 重复出现的话题 → 可能是当前焦点
+2. 情绪变化点 → 价值观相关
+3. 决策时刻 → 优先级/偏好
+4. 矛盾时刻 → 言行不一
+```
+
+### Quiz验证
+
+当发现新模式时，主动发起Quiz：
+
+```
+🔍 发现新模式，想确认一下：
+
+你说"AI创业很重要"，但在最近的对话中，
+你没有问过任何关于AI的问题。
+
+这是为什么？
+A. 最近在忙其他事
+B. 想法变了
+C. 我记错了
+
+或者直接告诉我实际情况。
+```
+
+### 矛盾检测
+
+发现矛盾时记录但不强制干预：
+
+```
+矛盾：说"健康第一"但经常凌晨2点后睡觉
+→ 画像置信度降低，但不主动提醒
+→ 等用户主动提健康话题时温和询问
+```
+
+## 三次确认 vs Quiz验证
+
+| 场景 | 方式 |
+|------|------|
+| 用户主动说 | 直接记录，无需重复 |
+| 从记忆挖掘 | 必须Quiz验证 |
+| 矛盾点 | 必须Quiz确认 |
+| 跨时间变化 | 需要重新验证 |
+
+## 工具调用
+
+### 读取记忆
+
+```
+Tool: 读取 ~/.openclaw/workspace/memory/narrative.jsonl
+```
+
+### 更新画像
+
+```
+Tool: context_update (via proactive-engine)
 Params:
-  key: <field name>
-  value: <value>
+  key: "user_profile"
+  value: { ...完整画像JSON }
 ```
 
-## Profile Fields
+### 发布信号
 
 ```
-USER.md dynamic fields:
-- profession/role
-- rest habits
-- family role
-- current focus areas
-- decision style
-- communication preference
-- emotional patterns
-- taboo/bottom lines (after 3 confirmations)
+Tool: signal_publish (via proactive-engine)
+Params:
+  type: "profile_updated"
+  payload: { field, confidence_change }
 ```
 
-## Important
+## 画像Tab数据格式
 
-- User's direct words > AI inference
-- Slow is better than wrong
-- 3 confirmations is protection, not restriction
-- Profiles serve understanding, not data collection
-- Works standalone without proactive-engine plugin
+控制面板显示：
 
-### With Signal Coordination (proactive-engine v0.6.0+)
-
-**Signals to Subscribe:**
-| Signal Type | Action |
-|-------------|--------|
-| `realization` | User learned something new → update focus areas |
-| `decision` | User made decision → update decision_style |
-| `feedback` | User expressed satisfaction → positive reinforcement |
-| `frustration` | User hit obstacle → update emotional patterns |
-
-**Implementation:**
 ```
-1. When context updated: publish to shared context
-   Tool: context_update
-   Params: { key: "user_profile_hash", value: <hash of current profile> }
+👤 用户画像（置信度 > 0.7）
+├── 职业：产品经理 95%
+├── 重心：AI创业 80%、自媒体 75%
+├── 健康：睡眠不足 90%（⚠️ 矛盾中）
+└── 价值观：家庭、创造、财务独立 85%
 
-2. Query for relevant signals to confirm understanding:
-   Tool: signal_query
-   Params: { type: ["realization", "decision", "feedback"] }
-
-3. When 3rd confirmation reached: notify value-guard
-   Tool: signal_publish
-   Params: { type: "value_confirmed", payload: { field, value, confidence: "high" } }
-
-4. Read shared context before writing to avoid conflicts:
-   Tool: context_get
-   → Check last user_profile_hash to detect changes
+🔍 待验证（Quiz）
+├── 沟通风格：说喜欢简洁，但最近问细节
+└── 健康：自述睡眠不足，但有早睡记录
 ```
 
-**Shared Context Keys:**
-- `user_profile_hash`: Detect profile changes from other skills
-- `topTopics`: Avoid duplicate context updates on same topic
+## 使用时机
+
+1. **proactive_check触发时** → 挖掘新记忆，更新画像
+2. **用户主动提到偏好时** → 直接记录，不挖掘
+3. **发现矛盾时** → 发起Quiz，不强制
+4. **画像不完整时** → 主动补充背景卡流程
+
+## 与背景卡的关系
+
+背景卡（~/.openclaw/workspace/user-profile.json）是**初始画像**，Scanner是**动态挖掘**：
+
+- 背景卡：用户主动填写的静态信息
+- Scanner：AI主动发现的动态模式
+
+Scanner不覆盖背景卡，而是**补充+验证**。
+
+## 注意事项
+
+- 用户直接说的 > AI挖掘的
+- Quiz语气要温和，不是质问
+- 矛盾检测是帮助理解，不是监控
+- 置信度 < 0.5的不要写进画像
 
 ---
 
-**Tags for publishing:** soul, system, user-profile, context, understanding
-
-**Requires nothing** — writes directly to USER.md, works standalone.
+**Tags:** soul, system, user-profile, memory-mining, quiz, contradiction-detection
