@@ -1,15 +1,15 @@
 ---
 name: user-context-scanner
-version: 0.3.0
+version: 0.4.0
 description: >
-  用户画像扫描器 v3：主动挖掘记忆 + Quiz验证 + 矛盾检测 + 置信度评分。
+  用户画像扫描器 v4：可执行脚本 + 自动证据挖掘 + 实时矛盾检测 + 动态置信度评分。
   构建和维护动态用户画像，从被动记录到主动理解。
-  触发条件：用户提及偏好、检测到行为模式、发现矛盾、定期画像更新。
+  触发条件：用户提及偏好、检测到行为模式、发现矛盾、定期画像更新、新记忆文件。
 ---
 
-# User Context Scanner v3
+# User Context Scanner v4
 
-让AI真正"懂你"：不仅记录你说的话，更理解你的行为模式和内在一致性。
+让AI真正"懂你"：不仅记录你说的话，更理解你的行为模式和内在一致性。**现在可执行，非文档指导。**
 
 ## 核心升级
 
@@ -114,25 +114,100 @@ description: >
 
 ## 与其他Skill协作
 
-### 数据提供
-- **proactive-trigger**：提供用户兴趣热点，影响触发决策
-- **value-aware-guard**：提供价值声明和行为一致性数据
-- **mood-simulator**：提供沟通偏好和精力模式数据
-- **narrative-memory**：提供关键人生事件和价值观形成背景
+### 信号发布（自动）
+脚本自动发布以下信号到共享信号系统：
 
-### 数据接收
-- **proactive-trigger**：接收触发反馈，优化兴趣识别
-- **value-aware-guard**：接收价值冲突信息，调整画像置信度
-- **mood-simulator**：接收情绪状态数据，理解情境性行为变化
-- 所有skills：提供用户画像数据，支持个性化交互
+| 信号类型 | 触发条件 | 用途 |
+|----------|----------|------|
+| `user_pattern_discovered` | 发现新的行为模式 | proactive-trigger用于话题推送 |
+| `contradiction_detected` | 检测到言行矛盾 | value-aware-guard用于价值一致性检查 |
+| `profile_confidence_low` | 画像字段置信度过低 | 触发Quiz生成和验证 |
+| `new_preference_identified` | 识别新的用户偏好 | mood-simulator用于情绪上下文 |
+| `profile_updated` | 画像重要字段更新 | 通知所有skills更新用户上下文 |
+
+### 信号接收（自动）
+脚本自动处理以下信号：
+
+| 信号类型 | 来源 | 处理方式 |
+|----------|------|----------|
+| `conversation_analysis` | narrative-memory | 分析对话中的用户陈述 |
+| `value_declaration` | value-aware-guard | 记录用户价值声明 |
+| `mood_state` | mood-simulator | 理解情境性行为变化 |
+| `quiz_response` | 用户交互 | 更新字段置信度和值 |
+
+### 数据共享
+通过 `~/.openclaw/workspace/.soul/` 目录共享数据：
+- `user-profile.json` - 结构化用户画像
+- `user-evidence.jsonl` - 原始证据记录
+- `scanner-config.json` - 可调参数配置
+- `scanner-state.json` - 扫描状态和统计
+
+## 执行方式
+
+### 脚本驱动（推荐）
+skill现在包含可执行脚本，通过Node.js运行：
+
+```bash
+# 进入skill目录
+cd /Users/zhaoguoqiang/.openclaw/skills/@soul-system/user-context-scanner
+
+# 安装依赖
+npm install
+
+# 运行方式：
+npm run start                    # 完整扫描流程
+npm run scan-memory              # 扫描记忆文件
+npm run analyze-profile          # 分析画像置信度
+npm run check-contradictions     # 检测矛盾
+```
+
+### 手动测试
+```bash
+node scripts/scanner.js --scan-memory
+node scripts/scanner.js --analyze-profile
+node scripts/scanner.js --check-contradictions
+node scripts/scanner.js --update-profile
+node scripts/scanner.js --generate-quiz
+```
+
+### 自动集成
+通过cron或proactive-engine插件自动调用：
+```bash
+# 每天凌晨2点执行完整扫描
+0 2 * * * cd /path/to/skill && node scripts/scanner.js
+
+# 每6小时检查新记忆
+0 */6 * * * cd /path/to/skill && node scripts/scanner.js --scan-memory
+```
+
+### 配置管理
+```bash
+# 查看配置
+npm run config-show
+
+# 重置配置
+npm run config-reset
+
+# 更新配置
+node scripts/utils/config-loader.js update scanIntervalHours 12
+```
 
 ## 快速开始
 
 ### 启用与初始化
-1. **自动启用**：安装后自动开始基础扫描
-2. **背景卡导入**：如有user-profile.json，自动导入作为初始画像
-3. **学习阶段**：1-2周收集足够数据建立可靠画像
-4. **个性化优化**：根据用户反馈调整扫描敏感度和频率
+1. **安装依赖**：运行 `npm install`
+2. **初始测试**：运行 `npm test` 验证基础功能
+3. **首次扫描**：运行 `npm run scan-memory` 开始记忆挖掘
+4. **自动调度**：设置cron任务定期运行
+
+### 背景卡导入
+如有user-profile.json，自动导入作为初始画像
+
+### 学习阶段
+1-2周收集足够数据建立可靠画像
+
+### 个性化优化
+根据用户反馈调整扫描敏感度和频率
 
 ### 用户控制
 用户可通过以下方式控制系统：
@@ -150,12 +225,23 @@ description: >
 
 ## 参考文件
 
+### 详细算法
 | 文件 | 内容 |
 |------|------|
 | [profile-schema.md](references/profile-schema.md) | 画像详细数据结构与Schema |
 | [quiz-examples.md](references/quiz-examples.md) | Quiz交互示例与设计策略 |
 | [contradiction-rules.md](references/contradiction-rules.md) | 矛盾检测算法与处理规则 |
 
+### 脚本文件（可执行）
+| 脚本 | 功能 |
+|------|------|
+| `scripts/scanner.js` | 主执行脚本，协调扫描、分析、更新全流程 |
+| `scripts/utils/profile-manager.js` | 用户画像CRUD操作、证据管理、置信度计算 |
+| `scripts/utils/config-loader.js` | 配置管理，支持动态调整参数 |
+| `scripts/utils/signal-manager.js` | 信号发布与处理（复用proactive-trigger） |
+| `scripts/test-basic.js` | 基础功能测试 |
+| `package.json` | 依赖和脚本命令定义 |
+
 ---
 
-**Tags:** soul, system, user-profile, memory-mining, contradiction-detection, confidence-scoring
+**Tags:** soul, system, user-profile, memory-mining, contradiction-detection, confidence-scoring, executable-scripts

@@ -1,0 +1,23 @@
+{
+  "name": "@soul-system/user-context-scanner",
+  "version": "0.4.0",
+  "type": "module",
+  "description": "User context scanner v4 for soul-system - executable scripts for user profile mining and analysis",
+  "main": "scripts/scanner.js",
+  "scripts": {
+    "start": "node scripts/scanner.js",
+    "test": "node scripts/test-basic.js",
+    "scan-memory": "node scripts/scanner.js --scan-memory",
+    "analyze-profile": "node scripts/scanner.js --analyze-profile",
+    "check-contradictions": "node scripts/scanner.js --check-contradictions",
+    "update-profile": "node scripts/scanner.js --update-profile",
+    "config-show": "node scripts/utils/config-loader.js show",
+    "config-reset": "node scripts/utils/config-loader.js resetToDefaults"
+  },
+  "dependencies": {
+    "date-fns": "^3.6.0"
+  },
+  "keywords": ["soul-system", "user-profile", "context-scanner", "memory-mining", "contradiction-detection"],
+  "author": "soul-system",
+  "license": "MIT"
+}
