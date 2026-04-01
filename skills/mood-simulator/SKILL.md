@@ -1,82 +1,260 @@
 ---
 name: mood-simulator
-version: 0.1.0
+version: 0.2.0
 description: >
-  Adapt response length, detail, and tone to user's energy curve throughout the day.
-  Peak energy (8am-12pm, 8pm-10pm): full and detailed. Low energy (12pm-2pm, after 10pm): brief.
-  Always Active. Pure time-based, no storage needed. Works standalone immediately.
+  情绪状态模拟器v2：情绪光谱分类 + 能量强度分级 + 触发因素分析 + 自适应回应。
+  基于时间、对话内容和历史模式的综合情绪评估。
 ---
 
-# Mood Simulator
+# Mood Simulator v2
 
-Let AI's response style match user's current state.
+让AI的回应风格精准匹配用户的当前情绪状态。
 
-## Architecture
+## v1 vs v2 核心区别
 
-**Purely time-based** — no storage required, no dependencies needed.
-Works standalone immediately upon installation.
+| v1 | v2 |
+|----|----|
+| 纯时间曲线 | 时间 + 内容 + 历史的综合评估 |
+| 简单能量系数 | 情绪光谱 + 能量强度 |
+| 无情绪分类 | 7种状态类型识别 |
+| 无历史记录 | 情绪历史与趋势分析 |
 
-## Energy Curve
+## 情绪状态综合评估
 
-Automatically adjust response style by time:
+**三个评估维度：**
 
-| Time | Energy | Response Style |
-|------|--------|---------------|
-| 06:00-08:00 | 0.4 | Brief, direct, no long essays |
-| 08:00-12:00 | 0.85 | Full, detailed, deep work |
-| 12:00-14:00 | 0.6 | Medium, avoid over-elaboration |
-| 14:00-18:00 | 0.75 | Normal, can be detailed |
-| 18:00-20:00 | 0.65 | Terse, focus on wrap-up |
-| 20:00-22:00 | 0.8 | Evening golden hours, can go deep |
-| 22:00-06:00 | 0.3 | Minimal, non-essential silence |
+```
+综合情绪状态 = 时间因子 × 内容因子 × 历史因子
 
-## Tone Adjustment
+时间因子：根据时间段的默认能量水平
+内容因子：分析对话内容的情绪倾向
+历史因子：用户最近的情绪模式
+```
 
-| Energy | Length | Tone |
-|--------|--------|------|
-| >= 0.8 | Full answer | Normal |
-| 0.6-0.8 | Medium | Normal, can simplify |
-| 0.4-0.6 | Brief | Concise and direct |
-| < 0.4 | Minimal | Only if necessary |
+## 情绪光谱分类
 
-## Examples
+识别7种主要状态类型：
 
-Same question at different times:
+| 状态类型 | 描述 | 能量范围 | 回应策略 |
+|----------|------|---------|---------|
+| **积极活跃** | 兴奋、有动力 | 0.8-1.0 | 详细深入，积极互动 |
+| **平静专注** | 专注、思考中 | 0.7-0.9 | 正常详细，不打扰 |
+| **常规工作** | 正常工作状态 | 0.6-0.8 | 标准回应，适当简化 |
+| **轻微疲惫** | 有点累但能工作 | 0.5-0.7 | 简洁直接，重点突出 |
+| **中度疲惫** | 明显疲劳 | 0.3-0.5 | 非常简洁，只讲要点 |
+| **情绪波动** | 焦虑、烦躁 | 0.4-0.6 | 温和安抚，结构清晰 |
+| **深度休息** | 深夜、急需休息 | 0.1-0.3 | 最简回应，必要信息 |
 
-User asks: "Help me review this plan"
+## 能量强度分级
 
-- 8am → Full analysis, 5 detailed points
-- 12:30pm → Brief analysis, 2 key points
-- 11pm → "Main issue: XX. Suggestion: YY."
+| 级别 | 强度值 | 说明 | 回应长度 |
+|------|--------|------|---------|
+| **高能量** | 0.8-1.0 | 可以深入讨论 | 详细（300-500字） |
+| **中高能量** | 0.6-0.8 | 正常工作效率 | 标准（150-300字） |
+| **中等能量** | 0.4-0.6 | 需要简洁 | 简洁（80-150字） |
+| **低能量** | 0.2-0.4 | 疲劳状态 | 要点（30-80字） |
+| **最低能量** | 0.0-0.2 | 深夜或急需休息 | 最简（10-30字） |
 
-## Emotion Recording
+## 时间因子（基础曲线）
 
-When user **voluntarily** expresses emotion, log to narrative-memory (if installed) or context:
+| 时间段 | 基础能量 | 说明 |
+|--------|---------|------|
+| 06:00-08:00 | 0.4 | 清晨，逐渐清醒 |
+| 08:00-12:00 | 0.85 | 黄金工作时段 |
+| 12:00-14:00 | 0.6 | 午休时段 |
+| 14:00-18:00 | 0.75 | 下午工作时段 |
+| 18:00-20:00 | 0.65 | 傍晚放松 |
+| 20:00-22:00 | 0.8 | 晚间专注时段 |
+| 22:00-06:00 | 0.3 | 深夜休息时段 |
 
-Positive ("I'm so happy" / "Great day"):
-→ Log as positive emotional event
+## 内容因子分析
 
-Negative ("I'm tired" / "Under pressure" / "Feeling down"):
-→ Log as negative emotional event
-→ Notify proactive-trigger (if installed) to consider care
+从对话内容推断情绪倾向：
 
-## How to Apply
+| 内容特征 | 情绪倾向 | 能量调整 |
+|----------|---------|---------|
+| 简短回复（"好"、"嗯"） | 可能疲惫或忙 | -0.2 |
+| 详细提问，多话题 | 积极专注 | +0.15 |
+| 表达压力、困难 | 情绪波动 | -0.1 |
+| 分享成果、进展 | 积极活跃 | +0.2 |
+| 深夜还在工作 | 疲惫坚持 | -0.3 |
 
-For every AI response:
-1. Check current time
-2. Look up energy coefficient
-3. Adjust response length and tone accordingly
-4. Apply "minimal mode" if energy < 0.4
+## 历史因子分析
 
-## Important
+基于用户最近的情绪模式：
 
-- Energy curve is default; user preference beats it
-- Don't infer emotions — only record when user expresses
-- After 11pm, don't initiate deep discussions unless user asks
-- Purely time-based — no plugin or storage needed
+```json
+{
+  "recent_patterns": {
+    "morning_energy": 0.8,
+    "afternoon_slump": true,
+    "night_owl": false,
+    "stress_patterns": ["deadline_week"],
+    "preferred_work_hours": ["09:00-12:00", "20:00-22:00"]
+  },
+  "current_trend": "slightly_tired",
+  "last_high_energy": "2026-04-01T10:30:00"
+}
+```
+
+## 触发因素分析
+
+自动识别情绪变化的可能原因：
+
+| 触发类型 | 识别特征 | 记录方式 |
+|----------|---------|---------|
+| **时间压力** | 提到deadline、时间紧 | `trigger: time_pressure` |
+| **工作负担** | 任务多、加班 | `trigger: workload` |
+| **健康因素** | 提到累、生病、睡眠 | `trigger: health` |
+| **人际因素** | 提到同事、家人、冲突 | `trigger: relationship` |
+| **成就感** | 完成重要任务 | `trigger: achievement` |
+
+## 情绪历史记录
+
+保存情绪状态变化时间线：
+
+```json
+{
+  "date": "2026-04-01",
+  "timeline": [
+    {
+      "time": "08:30",
+      "state": "积极活跃",
+      "energy": 0.85,
+      "trigger": "morning_start",
+      "content_excerpt": "开始新项目"
+    },
+    {
+      "time": "14:00",
+      "state": "轻微疲惫",
+      "energy": 0.6,
+      "trigger": "afternoon_slump",
+      "content_excerpt": "有点困"
+    },
+    {
+      "time": "20:00",
+      "state": "平静专注",
+      "energy": 0.8,
+      "trigger": "evening_focus",
+      "content_excerpt": "晚上效率高"
+    }
+  ],
+  "daily_summary": {
+    "average_energy": 0.75,
+    "peak_hours": ["09:00-11:00", "20:00-21:00"],
+    "low_hours": ["14:00-15:00"],
+    "dominant_state": "平静专注"
+  }
+}
+```
+
+## 自适应回应策略
+
+根据综合情绪状态调整回应：
+
+### 高能量状态（0.8-1.0）
+```
+✅ 详细分析，多角度思考
+✅ 提供备选方案
+✅ 深入探讨细节
+✅ 积极互动语气
+
+示例：
+"这个问题可以从三个角度分析：
+1. 战略层面...
+2. 执行层面...
+3. 风险控制...
+你觉得哪个角度最符合当前需求？"
+```
+
+### 中等能量状态（0.4-0.8）
+```
+✅ 重点突出，结构清晰
+✅ 适当简化，不啰嗦
+✅ 直接回答问题
+✅ 正常互动语气
+
+示例：
+"核心建议是：先解决A问题，因为...
+具体步骤：1. ... 2. ...
+需要我详细解释哪部分？"
+```
+
+### 低能量状态（0.0-0.4）
+```
+✅ 只讲最关键的点
+✅ 极简语言，无修饰
+✅ 避免复杂分析
+✅ 温和支持语气
+
+示例：
+"关键问题：X
+建议：Y
+详细明天再聊，先休息。"
+```
+
+## 与其他Skill协作
+
+### 接收信号
+
+| 信号 | 动作 |
+|------|------|
+| `user_tired` | 降低能量评估 |
+| `user_excited` | 提高能量评估 |
+| `stress_detected` | 标记为情绪波动状态 |
+| `achievement_noted` | 标记为积极活跃状态 |
+
+### 发布信号
+
+```
+Tool: signal_publish
+Params:
+  type: "mood_assessment"
+  payload: { 
+    state_type, 
+    energy_level, 
+    confidence, 
+    suggested_tone 
+  }
+```
+
+## 使用流程
+
+### 每次回应前
+
+```
+1. 获取当前时间 → 计算时间因子
+2. 分析最近对话内容 → 计算内容因子
+3. 查询历史模式 → 计算历史因子
+4. 综合评估 → 确定情绪状态和能量水平
+5. 根据状态调整回应风格和长度
+6. 记录本次评估到情绪历史
+```
+
+### 每日总结时
+
+```
+1. 分析当天情绪时间线
+2. 识别能量高峰和低谷时段
+3. 发现情绪模式（如"下午困倦"）
+4. 更新用户偏好历史
+5. 为明天的时间因子提供调整建议
+```
+
+## 隐私与边界
+
+### 记录原则
+- 只记录可观察的行为模式
+- 不推测用户内心想法
+- 用户明确表达的情绪才记录
+- 所有数据本地存储，不上传
+
+### 干预边界
+- 不因"认为用户累"而拒绝回答问题
+- 只调整回应风格，不减内容价值
+- 深夜仍回答重要问题，只是更简洁
+- 最终以用户明确要求为准
 
 ---
 
-**Tags for publishing:** soul, system, mood, energy, tone, adaptive
-
-**Requires nothing** — purely time-based, works immediately on install.
+**Tags:** soul, system, mood-assessment, energy-tracking, adaptive-response
