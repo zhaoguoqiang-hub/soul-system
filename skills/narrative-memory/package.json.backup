@@ -3,6 +3,9 @@
   "version": "0.3.0",
   "description": "叙事记忆系统：捕捉生命中有意义的时刻，编织成连贯的个人叙事。支持独立CLI和proactive-engine协作。",
   "main": "scripts/narrative.js",
+  "bin": {
+    "soul_narrative": "./bin/soul_narrative.js"
+  },
   "scripts": {
     "start": "node scripts/narrative.js",
     "test": "node scripts/test-basic.js",

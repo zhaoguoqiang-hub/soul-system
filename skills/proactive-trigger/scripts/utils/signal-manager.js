@@ -61,7 +61,7 @@ export function publishSignal(source, type, payload, priority = 'medium') {
  * @param {string} source 筛选信号来源
  * @returns {Array} 信号列表
  */
-export function getPendingSignals(type = null, source = null) {
+export function getPendingSignals(type = null, source = null, distributedTo = null) {
   ensureDir(SIGNALS_DIR);
   
   const pendingFile = path.join(SIGNALS_DIR, 'pending.jsonl');
@@ -79,7 +79,7 @@ export function getPendingSignals(type = null, source = null) {
       } catch {
         return null;
       }
-    }).filter(signal => signal && signal.status === 'pending');
+    }).filter(signal => signal && signal.status === 'pending' || status === 'processing');
     
     // 筛选
     let filtered = signals;
@@ -89,8 +89,11 @@ export function getPendingSignals(type = null, source = null) {
     if (source) {
       filtered = filtered.filter(s => s.source === source);
     }
-    
-    return filtered;
+    if (distributedTo) {
+      filtered = filtered.filter(s => s.distributedTo && s.distributedTo.includes(distributedTo));
+    }
+
+  return filtered;
   } catch (error) {
     console.error('读取信号文件失败:', error.message);
     return [];

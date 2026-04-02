@@ -4,7 +4,7 @@
  * 基础测试脚本
  */
 
-import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, writeFileSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { loadConfig } from './utils/config-loader.js';
 
@@ -130,7 +130,6 @@ try {
 // 5. 测试package.json
 console.log('\n5. 测试package.json...');
 try {
-  import { readFileSync } from 'fs';
   const packagePath = join(process.env.HOME || '/', '.openclaw/skills/@soul-system/narrative-memory/package.json');
   if (existsSync(packagePath)) {
     const pkg = JSON.parse(readFileSync(packagePath, 'utf-8'));

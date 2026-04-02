@@ -3,6 +3,9 @@
   "version": "0.6.0",
   "description": "主动触发引擎：基于话题热度衰减模型和沉默等待指数，智能判断触发时机，支持独立CLI和proactive-engine协作。",
   "main": "scripts/trigger.js",
+  "bin": {
+    "soul_trigger": "./bin/soul_trigger.js"
+  },
   "scripts": {
     "start": "node scripts/trigger.js",
     "test": "node scripts/test-basic.js",

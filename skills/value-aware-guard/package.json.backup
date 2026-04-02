@@ -3,6 +3,9 @@
   "version": "0.5.0",
   "description": "价值守护系统：监控价值漂移，检查边界违规，执行渐进式干预，支持独立CLI和proactive-engine协作。",
   "main": "scripts/guard.js",
+  "bin": {
+    "soul_guard": "./bin/soul_guard.js"
+  },
   "scripts": {
     "start": "node scripts/guard.js",
     "test": "node scripts/test-basic.js",

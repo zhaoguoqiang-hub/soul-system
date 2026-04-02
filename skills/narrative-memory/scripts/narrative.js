@@ -675,7 +675,19 @@ async function main() {
     case '--process-signal':
       if (args[1]) {
         try {
-          const signal = JSON.parse(args[1]);
+      // 修复：支持JSON字符串和普通字符串
+      let signal;
+      try {
+        signal = JSON.parse(args[1]);
+      } catch (e) {
+        // 如果不是JSON，当作普通字符串处理
+        signal = {
+          type: args[1],
+          payload: { text: `接收到信号: ${args[1]}` },
+          timestamp: new Date().toISOString()
+        };
+        console.log(`将字符串信号"${args[1]}"转换为标准格式`);
+      }
           console.log(`处理信号: ${signal.type} [${signal.id}]`);
           
           // 根据信号类型处理

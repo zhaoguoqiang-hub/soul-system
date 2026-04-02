@@ -3,6 +3,9 @@
   "version": "0.5.0",
   "description": "情绪状态模拟器：基于时间、内容和历史的综合情绪评估，智能调整回应风格，支持独立CLI和proactive-engine协作。",
   "main": "scripts/mood.js",
+  "bin": {
+    "soul_mood": "./bin/soul_mood.js"
+  },
   "scripts": {
     "start": "node scripts/mood.js",
     "test": "node scripts/test-basic.js",

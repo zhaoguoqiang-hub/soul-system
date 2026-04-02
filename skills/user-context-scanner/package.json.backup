@@ -3,6 +3,9 @@
   "version": "0.5.0",
   "description": "用户画像扫描器：构建和维护动态用户画像，支持独立CLI和proactive-engine协作。",
   "main": "scripts/scanner.js",
+  "bin": {
+    "soul_scanner": "./bin/soul_scanner.js"
+  },
   "scripts": {
     "start": "node scripts/scanner.js",
     "test": "node scripts/test-basic.js",
