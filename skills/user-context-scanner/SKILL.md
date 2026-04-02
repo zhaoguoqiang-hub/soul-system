@@ -1,54 +1,41 @@
 ---
 name: user-context-scanner
-description: 用户画像扫描器：自动挖掘用户偏好、行为模式、兴趣图谱，支持实时上下文更新。触发条件：用户表达偏好、检测到行为模式。
+description: 用户画像扫描器v4：自动挖掘用户偏好、行为模式、兴趣图谱，支持实时上下文更新。触发条件：用户表达偏好、检测到行为模式、上下文更新请求。
 ---
 
 # User Context Scanner - 用户上下文扫描器
 
-## 快速开始
+## 使用方法
 
-### 1. 安装依赖
+### 直接调用
 ```bash
-cd skills/user-context-scanner
-npm install
+node scripts/scanner.js <命令> [选项]
 ```
 
-### 2. 基本使用
+### 信号处理模式
 ```bash
-# 扫描上下文
-node scripts/scanner.js scan
-
-# 显示用户画像
-node scripts/scanner.js profile
-
-# 显示统计
-node scripts/scanner.js stats
-```
-
-### 3. 信号处理
-```bash
-node scripts/scanner.js --process-signal context_update
+node scripts/scanner.js --process-signal <signal>
 ```
 
 ## 命令
 
-| 命令 | 说明 |
-|------|------|
-| `scan` | 扫描并更新上下文 |
-| `profile` | 显示用户画像 |
-| `stats` | 显示统计信息 |
-
-## 数据存储
-
-- 用户画像：`~/.soul/user-profile.json`
-- 上下文数据：`~/.soul/context.json`
+- `scan [选项]` - 扫描并更新用户上下文
+- `profile` - 显示当前用户画像
+- `stats` - 显示统计信息
 
 ## 示例
 
 ```bash
-# 扫描新上下文
+# 扫描上下文
 node scripts/scanner.js scan
 
-# 查看画像
+# 显示画像
 node scripts/scanner.js profile
+
+# 信号处理
+node scripts/scanner.js --process-signal context_update
 ```
+
+## 与proactive-engine集成
+
+该skill通过`--process-signal`参数与proactive-engine信号系统集成，支持自动更新用户画像。
