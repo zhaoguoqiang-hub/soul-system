@@ -2,7 +2,7 @@
   "id": "proactive-engine",
   "name": "Soul Proactive Engine",
   "description": "主动引擎：内生目标系统 + 后台反思线程 + 主动触发。让AI助理从被动响应转向积极主动。",
-  "version": "1.2.0",
+  "version": "0.1.0",
   "author": "soul-system",
   "license": "MIT",
   "skills": [],

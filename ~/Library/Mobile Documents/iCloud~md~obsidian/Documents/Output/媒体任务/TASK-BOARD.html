@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小艾·任务看板</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            color: #e4e4e7;
+            padding: 20px;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            font-size: 28px;
+            font-weight: 600;
+            background: linear-gradient(90deg, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+        }
+        .header .subtitle {
+            font-size: 14px;
+            color: #71717a;
+        }
+        .kanban {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .column {
+            background: rgba(255,255,255,0.03);
+            border-radius: 16px;
+            padding: 16px;
+            border: 1px solid rgba(255,255,255,0.06);
+        }
+        .column-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+        .column-icon {
+            font-size: 20px;
+        }
+        .column-title {
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .column-count {
+            margin-left: auto;
+            background: rgba(255,255,255,0.1);
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 12px;
+        }
+        .task-card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 14px;
+            margin-bottom: 12px;
+            border: 1px solid rgba(255,255,255,0.04);
+            transition: all 0.2s ease;
+        }
+        .task-card:hover {
+            background: rgba(255,255,255,0.08);
+            transform: translateY(-2px);
+        }
+        .task-id {
+            font-size: 11px;
+            color: #60a5fa;
+            font-family: monospace;
+            margin-bottom: 6px;
+        }
+        .task-title {
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 10px;
+            line-height: 1.4;
+        }
+        .task-meta {
+            display: flex;
+            gap: 12px;
+            font-size: 11px;
+            color: #71717a;
+        }
+        .task-meta span {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+        .status-pending { background: rgba(251,191,36,0.2); color: #fbbf24; }
+        .status-progress { background: rgba(59,130,246,0.2); color: #60a5fa; }
+        .status-done { background: rgba(34,197,94,0.2); color: #22c55e; }
+        .status-error { background: rgba(239,68,68,0.2); color: #ef4444; }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #52525b;
+        }
+        .empty-state .icon {
+            font-size: 40px;
+            margin-bottom: 12px;
+        }
+        
+        .legend {
+            max-width: 1400px;
+            margin: 30px auto 0;
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: #71717a;
+        }
+        .legend-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+        
+        /* Pipeline steps */
+        .pipeline {
+            display: flex;
+            gap: 4px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+        .pipeline-step {
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: rgba(255,255,255,0.05);
+            color: #71717a;
+        }
+        .pipeline-step.active {
+            background: rgba(59,130,246,0.3);
+            color: #60a5fa;
+        }
+        .pipeline-step.done {
+            background: rgba(34,197,94,0.2);
+            color: #22c55e;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🐈‍⬛ 小艾·任务看板</h1>
+        <p class="subtitle">实时查看三省六部流水线进度</p>
+    </div>
+
+    <div class="kanban">
+        <!-- 进行中 -->
+        <div class="column" id="col-progress">
+            <div class="column-header">
+                <span class="column-icon">🔄</span>
+                <span class="column-title">进行中</span>
+                <span class="column-count" id="count-progress">0</span>
+            </div>
+            <div id="tasks-progress" class="tasks-container">
+                <div class="empty-state">
+                    <div class="icon">📭</div>
+                    <p>暂无进行中的任务</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 待发布 -->
+        <div class="column" id="col-pending">
+            <div class="column-header">
+                <span class="column-icon">📝</span>
+                <span class="column-title">待发布</span>
+                <span class="column-count" id="count-pending">0</span>
+            </div>
+            <div id="tasks-pending" class="tasks-container">
+                <div class="empty-state">
+                    <div class="icon">📭</div>
+                    <p>暂无待发布内容</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 已发布 -->
+        <div class="column" id="col-done">
+            <div class="column-header">
+                <span class="column-icon">✅</span>
+                <span class="column-title">已发布</span>
+                <span class="column-count" id="count-done">0</span>
+            </div>
+            <div id="tasks-done" class="tasks-container">
+                <div class="empty-state">
+                    <div class="icon">📭</div>
+                    <p>暂无已发布内容</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="legend">
+        <div class="legend-item"><span class="legend-dot" style="background:#60a5fa"></span> 进行中</div>
+        <div class="legend-item"><span class="legend-dot" style="background:#fbbf24"></span> 待发布</div>
+        <div class="legend-item"><span class="legend-dot" style="background:#22c55e"></span> 已发布</div>
+    </div>
+
+    <script>
+        // 任务数据 - 由小艾更新
+        const tasks = [
+            // 格式示例:
+            // {
+            //     id: "JJC-20260402-001",
+            //     title: "写一篇关于 Claude Code 源码分析的文章",
+            //     status: "progress", // progress | pending | done
+            //     step: "刑部复核", // 当前环节
+            //     pipeline: ["策划", "审议", "吏部", "礼部", "刑部", "兵部", "户部"],
+            //     currentStep: 5, // 0-indexed, -1=未开始
+            //     created: "23:20",
+            //     updated: "23:49"
+            // }
+        ];
+
+        function renderTasks() {
+            const containers = {
+                progress: document.getElementById('tasks-progress'),
+                pending: document.getElementById('tasks-pending'),
+                done: document.getElementById('tasks-done')
+            };
+            
+            const counts = { progress: 0, pending: 0, done: 0 };
+
+            Object.keys(containers).forEach(status => {
+                const filtered = tasks.filter(t => t.status === status);
+                counts[status] = filtered.length;
+                
+                if (filtered.length === 0) {
+                    containers[status].innerHTML = `
+                        <div class="empty-state">
+                            <div class="icon">📭</div>
+                            <p>暂无${status === 'progress' ? '进行中的任务' : status === 'pending' ? '待发布内容' : '已发布内容'}</p>
+                        </div>
+                    `;
+                } else {
+                    containers[status].innerHTML = filtered.map(task => `
+                        <div class="task-card">
+                            <div class="task-id">${task.id}</div>
+                            <div class="task-title">${task.title}</div>
+                            <div class="task-meta">
+                                <span>📍 ${task.step}</span>
+                                <span>🕐 ${task.updated}</span>
+                            </div>
+                            <div class="pipeline">
+                                ${task.pipeline.map((step, i) => {
+                                    let cls = 'pipeline-step';
+                                    if (i < task.currentStep) cls += ' done';
+                                    else if (i === task.currentStep) cls += ' active';
+                                    return `<span class="${cls}">${step}</span>`;
+                                }).join('')}
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            });
+
+            document.getElementById('count-progress').textContent = counts.progress;
+            document.getElementById('count-pending').textContent = counts.pending;
+            document.getElementById('count-done').textContent = counts.done;
+        }
+
+        // 初始渲染
+        renderTasks();
+        
+        // 定时刷新（可选）
+        // setInterval(renderTasks, 30000);
+    </script>
+</body>
+</html>

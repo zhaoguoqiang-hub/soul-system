@@ -23,6 +23,74 @@ const SOUL_DIR = join(WORKSPACE, '.soul');
 const MEMORY_DIR = join(WORKSPACE, 'memory');
 const PROFILE_PATH = join(SOUL_DIR, 'user-profile.json');
 const SCANNER_STATE_PATH = join(SOUL_DIR, 'scanner-state.json');
+const SIGNALS_DIR = join(SOUL_DIR, 'signals');
+const PENDING_SIGNALS_FILE = join(SIGNALS_DIR, 'pending.jsonl');
+
+function getPendingSignals() {
+  if (!existsSync(PENDING_SIGNALS_FILE)) return [];
+  try {
+    const content = readFileSync(PENDING_SIGNALS_FILE, 'utf-8');
+    const lines = content.split('\n').filter(Boolean);
+    return lines.map(line => {
+      try { return JSON.parse(line); }
+      catch { return null; }
+    }).filter(s => s && s.status === 'pending');
+  } catch { return []; }
+}
+
+function updateSignalStatus(signalId, updates) {
+  try {
+    const lines = readFileSync(PENDING_SIGNALS_FILE, 'utf-8').split('\n').filter(Boolean);
+    const signals = lines.map(line => { try { return JSON.parse(line); } catch { return null; } }).filter(Boolean);
+    const idx = signals.findIndex(s => s.id === signalId);
+    if (idx === -1) return;
+    signals[idx] = { ...signals[idx], ...updates };
+    const output = signals.map(s => JSON.stringify(s)).join('\n') + '\n';
+    writeFileSync(PENDING_SIGNALS_FILE, output);
+  } catch {}
+}
+
+async function consumeSignalsForContext() {
+  const signals = getPendingSignals();
+  const targetTypes = ['context_update', 'decision', 'question'];
+  const relevant = signals.filter(s => targetTypes.includes(s.type));
+  
+  if (relevant.length === 0) {
+    console.log('[user-context-scanner] 无相关信号待处理');
+    return { processed: 0 };
+  }
+  
+  console.log(`[user-context-scanner] 发现${relevant.length}个相关信号`);
+  const state = loadState();
+  const profile = loadUserProfile();
+  let processed = 0;
+  
+  for (const signal of relevant) {
+    const { type, payload } = signal;
+    const topic = payload?.topic || payload?.text || '';
+    
+    if (topic) {
+      console.log(`[user-context-scanner] 处理信号: ${type} - "${topic.slice(0, 50)}"`);
+      
+      // Update user profile based on signal
+      if (!profile.profile.preferences) profile.profile.preferences = {};
+      const key = `topic:${topic.slice(0, 20)}`;
+      profile.profile.preferences[key] = {
+        interest: type === 'decision' ? 'high' : 'medium',
+        lastSeen: new Date().toISOString(),
+        source: type
+      };
+      profile.profile.lastUpdated = new Date().toISOString();
+      saveUserProfile(profile);
+      console.log(`  已更新画像偏好: ${key}`);
+    }
+    
+    updateSignalStatus(signal.id, { status: 'processed', processedBy: [...(signal.processedBy || []), 'user-context-scanner'] });
+    processed++;
+  }
+  
+  return { processed };
+}
 
 // 默认配置
 const DEFAULT_CONFIG = {
@@ -500,6 +568,7 @@ async function main() {
       'check-contradictions': { type: 'boolean' },
       'update-profile': { type: 'boolean' },
       'generate-quiz': { type: 'boolean' },
+      'consume-signals': { type: 'boolean' },
       help: { type: 'boolean', short: 'h' }
     },
     allowPositionals: true
@@ -519,6 +588,7 @@ User Context Scanner 脚本
   --check-contradictions 检测画像中的矛盾
   --update-profile     根据新证据更新画像
   --generate-quiz      生成验证Quiz（针对低置信度字段）
+  --consume-signals    从信号队列消费上下文相关信号
   -h, --help           显示此帮助信息
 
 示例:
@@ -564,6 +634,9 @@ User Context Scanner 脚本
     for (const contradiction of contradictions) {
       console.log(`- ${contradiction.field}: ${contradiction.values.join(' vs ')}`);
     }
+    
+  } else if (values['consume-signals']) {
+    await consumeSignalsForContext();
     
   } else if (values['update-profile']) {
     console.log('更新画像功能（待实现）');

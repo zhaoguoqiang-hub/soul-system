@@ -17,6 +17,65 @@ const NARRATIVE_PATH = join(SOUL_DIR, 'narratives.jsonl');
 const ACCUMULATION_PATH = join(SOUL_DIR, 'accumulation-state.json');
 const DAILY_CONTEXT_PATH = join(SOUL_DIR, 'daily_context.json');
 const USER_VALUES_PATH = join(SOUL_DIR, 'user-values.json');
+const SIGNALS_DIR = join(SOUL_DIR, 'signals');
+const PENDING_SIGNALS_FILE = join(SIGNALS_DIR, 'pending.jsonl');
+
+function getPendingSignals() {
+  if (!existsSync(PENDING_SIGNALS_FILE)) return [];
+  try {
+    const content = readFileSync(PENDING_SIGNALS_FILE, 'utf-8');
+    const lines = content.split('\n').filter(Boolean);
+    return lines.map(line => {
+      try { return JSON.parse(line); }
+      catch { return null; }
+    }).filter(s => s && s.status === 'pending');
+  } catch { return []; }
+}
+
+function updateSignalStatus(signalId, updates) {
+  try {
+    const lines = readFileSync(PENDING_SIGNALS_FILE, 'utf-8').split('\n').filter(Boolean);
+    const signals = lines.map(line => { try { return JSON.parse(line); } catch { return null; } }).filter(Boolean);
+    const idx = signals.findIndex(s => s.id === signalId);
+    if (idx === -1) return;
+    signals[idx] = { ...signals[idx], ...updates };
+    const output = signals.map(s => JSON.stringify(s)).join('\n') + '\n';
+    writeFileSync(PENDING_SIGNALS_FILE, output);
+  } catch {}
+}
+
+async function consumeSignalsAndGenerateNarrative() {
+  const signals = getPendingSignals();
+  const targetTypes = ['breakthrough', 'decision', 'realization', 'frustration'];
+  const relevant = signals.filter(s => targetTypes.includes(s.type));
+  
+  if (relevant.length === 0) {
+    console.log('[narrative-memory] 无相关信号待处理');
+    return { processed: 0 };
+  }
+  
+  console.log(`[narrative-memory] 发现${relevant.length}个相关信号`);
+  const config = loadConfig();
+  let processed = 0;
+  
+  for (const signal of relevant) {
+    const { type, payload } = signal;
+    const text = payload?.topic || payload?.text || '';
+    
+    if (text) {
+      console.log(`[narrative-memory] 处理信号: ${type} - "${text.slice(0, 50)}"`);
+      const result = processText(text, config);
+      if (!result.ignored) {
+        console.log(`  叙事记录已创建 (importance: ${result.signals?.[0]?.importance?.toFixed(2) || 'N/A'})`);
+      }
+    }
+    
+    updateSignalStatus(signal.id, { status: 'processed', processedBy: [...(signal.processedBy || []), 'narrative-memory'] });
+    processed++;
+  }
+  
+  return { processed };
+}
 
 // 六大触发信号类型
 const SIGNAL_TYPES = {
@@ -649,6 +708,10 @@ async function main() {
       
     case '--patterns':
       analyzePatterns();
+      break;
+      
+    case '--consume-signals':
+      await consumeSignalsAndGenerateNarrative();
       break;
       
     case '--test':

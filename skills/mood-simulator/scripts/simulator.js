@@ -22,6 +22,87 @@ const SOUL_DIR = join(WORKSPACE, '.soul');
 const MOOD_STATE_PATH = join(SOUL_DIR, 'mood-state.json');
 const MOOD_PATTERNS_PATH = join(SOUL_DIR, 'mood-patterns.json');
 const MOOD_HISTORY_PATH = join(SOUL_DIR, 'mood-history.jsonl');
+const SIGNALS_DIR = join(SOUL_DIR, 'signals');
+const PENDING_SIGNALS_FILE = join(SIGNALS_DIR, 'pending.jsonl');
+
+function getPendingSignals() {
+  if (!existsSync(PENDING_SIGNALS_FILE)) return [];
+  try {
+    const content = readFileSync(PENDING_SIGNALS_FILE, 'utf-8');
+    const lines = content.split('\n').filter(Boolean);
+    return lines.map(line => {
+      try { return JSON.parse(line); }
+      catch { return null; }
+    }).filter(s => s && s.status === 'pending');
+  } catch { return []; }
+}
+
+function updateSignalStatus(signalId, updates) {
+  try {
+    const lines = readFileSync(PENDING_SIGNALS_FILE, 'utf-8').split('\n').filter(Boolean);
+    const signals = lines.map(line => { try { return JSON.parse(line); } catch { return null; } }).filter(Boolean);
+    const idx = signals.findIndex(s => s.id === signalId);
+    if (idx === -1) return;
+    signals[idx] = { ...signals[idx], ...updates };
+    const output = signals.map(s => JSON.stringify(s)).join('\n') + '\n';
+    writeFileSync(PENDING_SIGNALS_FILE, output);
+  } catch {}
+}
+
+async function consumeAndProcessSignalsForMood() {
+  const signals = getPendingSignals();
+  const targetTypes = ['frustration', 'feedback', 'breakthrough'];
+  const relevant = signals.filter(s => targetTypes.includes(s.type));
+  
+  if (relevant.length === 0) {
+    console.log('[mood-simulator] 无相关信号待处理');
+    return { processed: 0 };
+  }
+  
+  console.log(`[mood-simulator] 发现${relevant.length}个相关信号`);
+  let processed = 0;
+  
+  for (const signal of relevant) {
+    const { type, payload } = signal;
+    console.log(`[mood-simulator] 处理信号: ${type}`);
+    
+    // Update energy based on signal type
+    const state = loadState();
+    const patterns = loadPatterns();
+    
+    if (type === 'frustration') {
+      // frustration: 能量下降
+      const adjustment = -0.1;
+      state.energy = Math.max(0.1, Math.min(1.0, state.energy + adjustment));
+      state.mood = 'frustrated';
+      console.log(`  [frustration] 能量调整${adjustment}，当前能量: ${state.energy.toFixed(2)}`);
+    } else if (type === 'feedback') {
+      // feedback: 根据内容调整能量
+      const text = payload?.text || '';
+      if (text.includes('好') || text.includes('棒') || text.includes('不错')) {
+        state.energy = Math.min(1.0, state.energy + 0.05);
+        console.log(`  [正向反馈] 能量+0.05，当前: ${state.energy.toFixed(2)}`);
+      } else if (text.includes('不对') || text.includes('不行')) {
+        state.energy = Math.max(0.1, state.energy - 0.05);
+        console.log(`  [负向反馈] 能量-0.05，当前: ${state.energy.toFixed(2)}`);
+      }
+    } else if (type === 'breakthrough') {
+      // breakthrough: 能量小幅提升（成就感）
+      state.energy = Math.min(1.0, state.energy + 0.03);
+      console.log(`  [breakthrough] 能量+0.03，当前: ${state.energy.toFixed(2)}`);
+    }
+    
+    // Record to mood history
+    recordHistory({ mood: state.mood, energy: state.energy, trigger: type });
+    
+    // Mark signal processed
+    updateSignalStatus(signal.id, { status: 'processed', processedBy: [...(signal.processedBy || []), 'mood-simulator'] });
+    processed++;
+  }
+  
+  saveState(state);
+  return { processed };
+}
 
 // 默认配置
 const DEFAULT_CONFIG = {
@@ -684,6 +765,7 @@ async function main() {
     options: {
       test: { type: 'boolean', short: 't' },
       'calculate-energy': { type: 'boolean' },
+      'consume-signals': { type: 'boolean' },
       'analyze-message': { type: 'string' },
       'update-patterns': { type: 'boolean' },
       help: { type: 'boolean', short: 'h' }
@@ -704,6 +786,7 @@ Mood Simulator 脚本
   --calculate-energy           计算当前能量值（无上下文）
   --analyze-message [text]     分析消息内容的情绪倾向
   --update-patterns            更新用户情绪模式
+  --consume-signals          从信号队列消费情绪相关信号
   -h, --help                   显示此帮助信息
 
 示例:
@@ -753,6 +836,9 @@ Mood Simulator 脚本
     
   } else if (values['update-patterns']) {
     updateEmotionPatterns();
+    
+  } else if (values['consume-signals']) {
+    await consumeAndProcessSignalsForMood();
     
   } else {
     // 默认执行测试评估

@@ -353,7 +353,7 @@ function assessValueDrift(userValues, observedBehavior, config) {
   
   return {
     driftScore: overallDrift,
-    confidence: Math.min(1.0, driftDetails.length / 3),
+    confidence: Math.min(1.0, driftDetails.length / 3) * (driftDetails.some(d=>d.evidenceCount>0) ? 1 : 0),
     details: driftDetails,
     overall: driftLevel,
     assessment: getDriftAssessment(overallDrift, driftLevel)
@@ -475,7 +475,8 @@ async function runFullGuard(context = {}) {
   
   // 2. 评估价值漂移
   console.log('\n2. 评估价值漂移...');
-  const driftAssessment = assessValueDrift(userValues, context, config);
+  const effectiveContext = (Object.keys(context).length === 0) ? { note: 'no_recent_activity' } : context;
+  const driftAssessment = assessValueDrift(userValues, effectiveContext, config);
   console.log(`   价值漂移分数: ${driftAssessment.driftScore.toFixed(2)}`);
   console.log(`   漂移级别: ${driftAssessment.overall}`);
   console.log(`   评估置信度: ${driftAssessment.confidence.toFixed(2)}`);
@@ -578,12 +579,20 @@ async function runFullGuard(context = {}) {
     }, 'medium');
   }
   
-  if (config.publishDriftSignals && driftAssessment.driftScore > config.driftThresholdL1) {
+  // 只有置信度足够高才发信号（防止空数据误报）
+  const MIN_CONFIDENCE_FOR_SIGNAL = 0.2;
+  if (config.publishDriftSignals
+      && driftAssessment.driftScore > config.driftThresholdL1
+      && driftAssessment.confidence >= MIN_CONFIDENCE_FOR_SIGNAL
+      && driftAssessment.overall !== 'insufficient_data') {
     await publishSignal('value_drift_detected', {
       score: driftAssessment.driftScore,
       level: driftAssessment.overall,
       confidence: driftAssessment.confidence
     }, driftAssessment.driftScore > config.driftThresholdL3 ? 'high' : 'low');
+    console.log('   [信号已发布: value_drift_detected]');
+  } else if (driftAssessment.overall === 'insufficient_data' || driftAssessment.confidence < MIN_CONFIDENCE_FOR_SIGNAL) {
+    console.log('   [跳过发布: 置信度不足或数据不足]');
   }
   
   if (config.publishInterventionSignals && intervention) {

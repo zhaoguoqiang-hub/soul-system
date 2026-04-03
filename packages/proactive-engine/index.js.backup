@@ -10,8 +10,8 @@
  * - soul_context: 用户画像
  */
 
-import { definePluginEntry } from "openclaw/plugin-sdk/plugin-entry";
-import { createPluginRuntimeStore } from "openclaw/plugin-sdk/runtime-store";
+import { definePluginEntry } from "openclaw/plugin-sdk/plugin-entry.js";
+import { createPluginRuntimeStore } from "openclaw/plugin-sdk/runtime-store.js";
 import { GoalManager } from "./src/goal-manager.js";
 import { ReflectionThread } from "./src/reflection-thread.js";
 import { NarrativeMemory } from "./src/narrative-memory.js";

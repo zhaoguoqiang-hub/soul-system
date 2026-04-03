@@ -1,0 +1,119 @@
+{
+  "version": 1,
+  "skills": {
+    "nano-pdf": {
+      "name": "Nano Pdf",
+      "zip_url": "https://lightmake.site/api/v1/download?slug=nano-pdf",
+      "source": "skillhub",
+      "version": "1.0.0"
+    },
+    "document-pro": {
+      "name": "Document Pro",
+      "zip_url": "https://lightmake.site/api/v1/download?slug=document-pro",
+      "source": "skillhub",
+      "version": "1.0.0"
+    },
+    "rss-ai-reader": {
+      "name": "Rss Ai Reader",
+      "zip_url": "https://lightmake.site/api/v1/download?slug=rss-ai-reader",
+      "source": "skillhub",
+      "version": "1.0.0"
+    },
+    "agentmail": {
+      "name": "AgentMail",
+      "zip_url": "https://lightmake.site/api/v1/download?slug=agentmail",
+      "source": "skillhub",
+      "version": "1.1.1"
+    },
+    "tdd-guide": {
+      "name": "Tdd Guide",
+      "zip_url": "https://lightmake.site/api/v1/download?slug=tdd-guide",
+      "source": "skillhub",
+      "version": "2.1.1"
+    },
+    "get-tldr": {
+      "name": "get-tldr",
+      "zip_url": "https://lightmake.site/api/v1/download?slug=get-tldr",
+      "source": "skillhub",
+      "version": "1.0.0"
+    },
+    "essence-distiller": {
+      "name": "Essence Distiller",
+      "zip_url": "https://lightmake.site/api/v1/download?slug=essence-distiller",
+      "source": "skillhub",
+      "version": "1.0.3"
+    },
+    "cognitive-memory": {
+      "name": "Cognitive Memory",
+      "zip_url": "https://lightmake.site/api/v1/download?slug=cognitive-memory",
+      "source": "skillhub",
+      "version": "1.0.8"
+    },
+    "task-status": {
+      "name": "Task Status",
+      "zip_url": "https://lightmake.site/api/v1/download?slug=task-status",
+      "source": "skillhub",
+      "version": "1.0.0"
+    },
+    "voice-reply": {
+      "name": "Voice Reply",
+      "zip_url": "https://lightmake.site/api/v1/download?slug=voice-reply",
+      "source": "skillhub",
+      "version": "1.0.0"
+    },
+    "openclaw-backup": {
+      "name": "OpenClaw Backup",
+      "zip_url": "https://lightmake.site/api/v1/download?slug=openclaw-backup",
+      "source": "skillhub",
+      "version": "1.0.0"
+    },
+    "Frontend-Design": {
+      "name": "Frontend-Design",
+      "zip_url": "https://lightmake.site/api/v1/download?slug=Frontend-Design",
+      "source": "skillhub",
+      "version": ""
+    },
+    "agent-browser": {
+      "name": "Agent Browser",
+      "zip_url": "https://lightmake.site/api/v1/download?slug=agent-browser",
+      "source": "skillhub",
+      "version": "0.2.0"
+    },
+    "superpowers-mode": {
+      "name": "Superpowers Mode",
+      "zip_url": "https://lightmake.site/api/v1/download?slug=superpowers-mode",
+      "source": "skillhub",
+      "version": "1.0.1"
+    },
+    "find-skill": {
+      "name": "Find Skill",
+      "zip_url": "https://lightmake.site/api/v1/download?slug=find-skill",
+      "source": "skillhub",
+      "version": "1.0.0"
+    },
+    "openclaw-auto-updater": {
+      "name": "OpenClaw Auto‑Updater (Safe + Scheduled + Summary)",
+      "zip_url": "https://lightmake.site/api/v1/download?slug=openclaw-auto-updater",
+      "source": "skillhub",
+      "version": "1.0.0"
+    },
+    "cron": {
+      "name": "Cron",
+      "zip_url": "https://lightmake.site/api/v1/download?slug=cron",
+      "source": "skillhub",
+      "version": "1.0.0"
+    },
+    "cron-scheduling": {
+      "name": "Cron & Scheduling",
+      "zip_url": "https://lightmake.site/api/v1/download?slug=cron-scheduling",
+      "source": "skillhub",
+      "version": "1.0.0"
+    },
+    "cron-mastery": {
+      "name": "Cron Mastery",
+      "zip_url": "https://lightmake.site/api/v1/download?slug=cron-mastery",
+      "source": "skillhub",
+      "version": "1.0.3"
+    }
+  }
+}

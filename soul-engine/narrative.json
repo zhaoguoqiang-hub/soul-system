@@ -1,6 +1,0 @@
-{
-  "description": "soul_narrative 模拟工具 - 将对话事件写入时间线",
-  "usage": "echo '{\"event\":\"事件描述\",\"category\":\"milestone\",\"importance\":0.8,\"tags\":[\"tag1\"]}' | tee -a ~/.openclaw/workspace/.soul/narrative.log",
-  "timeline_file": "~/.openclaw/workspace/.soul/narrative.log",
-  "note": "TODO: 后续应由工部实现真正的 soul_narrative CLI 工具"
-}
