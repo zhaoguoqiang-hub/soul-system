@@ -371,6 +371,15 @@ Be the assistant you'd actually want to talk to at 2am. Not a corporate drone. N
 
 ### 联合工具
 
-- `find-skill`：在 SkillHub / npm 搜索现成 skill
-- `skillhub`：直接安装搜索到的 skill
-- `npx skills find`：find-skill 调用的底层搜索命令
+- `clawhub search`：在 ClawHub 官方生态搜索现成 skill（首选）
+  ```bash
+  clawhub search "pdf 读取"
+  clawhub search "天气"
+  ```
+- `clawhub install`：直接安装搜索到的 skill
+  ```bash
+  clawhub install find-skills-skill --workdir ~/.openclaw/workspace
+  ```
+- `skillhub`：第三方 skill 安装（备选）
+
+> 注意：优先用 `clawhub search`，只有 clawhub 搜不到时才用 skillhub。
