@@ -350,6 +350,19 @@ async function consumeAndProcessSignals() {
     console.log('没有待处理信号');
     return { processed: 0, triggered: 0 };
   }
+
+  // 快速路径：如果全是低优先级信号，只更新时间窗口，不触发
+  const highMediumSignals = signals.filter(s => s.priority === 'high' || s.priority === 'medium');
+  const allLowPriority = signals.length > 0 && highMediumSignals.length === 0;
+  
+  if (allLowPriority) {
+    console.log(`全是低优先级信号(${signals.length}个)，仅更新时间窗口，不触发主动干预`);
+    saveState(state);
+    return { processed: 0, triggered: 0, mode: 'low-priority-skip' };
+  }
+
+  // 有高/中等优先级信号，执行完整评估
+  console.log(`发现${highMediumSignals.length}个高/中优先级信号，执行完整评估`);
   
   let processedCount = 0;
   let triggeredCount = 0;
