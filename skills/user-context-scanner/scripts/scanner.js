@@ -52,46 +52,103 @@ function updateSignalStatus(signalId, updates) {
 
 async function consumeSignalsForContext() {
   const signals = getPendingSignals();
-  const targetTypes = ['context_update', 'decision', 'question'];
+  const targetTypes = ['context_update', 'decision', 'question', 'breakthrough', 'frustration', 'feedback'];
   const relevant = signals.filter(s => targetTypes.includes(s.type) && !(s.processedBy || []).includes("user-context-scanner"));
-  
-  if (relevant.length === 0) {
-    console.log('[user-context-scanner] 无相关信号待处理');
-    return { processed: 0 };
-  }
-  
-  console.log(`[user-context-scanner] 发现${relevant.length}个相关信号`);
-  const state = loadState();
+  if (relevant.length === 0) { console.log('[user-context-scanner] 无相关信号'); return { processed: 0 }; }
+  console.log('[user-context-scanner] 发现' + relevant.length + '个信号');
   const profile = loadUserProfile();
-  let processed = 0;
-  
+  if (!profile.profile) profile.profile = {};
+  for (var f of ['demographics','profession','habits','preferences','values','emotional_patterns','content_patterns']) { if (!profile.profile[f]) profile.profile[f] = {}; }
+  if (!profile.metadata) profile.metadata = { quiz_pending: [] };
+  let processed = 0, quizCount = 0;
   for (const signal of relevant) {
-    const { type, payload } = signal;
-    const topic = payload?.topic || payload?.text || '';
-    
-    if (topic) {
-      console.log(`[user-context-scanner] 处理信号: ${type} - "${topic.slice(0, 50)}"`);
-      
-      // Update user profile based on signal
-      if (!profile.profile.preferences) profile.profile.preferences = {};
-      const key = `topic:${topic.slice(0, 20)}`;
-      profile.profile.preferences[key] = {
-        interest: type === 'decision' ? 'high' : 'medium',
-        lastSeen: new Date().toISOString(),
-        source: type
-      };
-      profile.profile.lastUpdated = new Date().toISOString();
-      saveUserProfile(profile);
-      console.log(`  已更新画像偏好: ${key}`);
+    var topic = (signal.payload && (signal.payload.topic || signal.payload.text || signal.payload.event || '')) || '';
+    var extractions = extractFromSignal(signal);
+    for (var ex of extractions) {
+      var fd = (profile.profile[ex.field] && profile.profile[ex.field][ex.subfield]) || {};
+      var newConf = updateConf(fd.confidence || 0, ex.confidence, ex.source.includes('direct') ? 'direct' : 'behavior');
+      if (!profile.profile[ex.field]) profile.profile[ex.field] = {};
+      profile.profile[ex.field][ex.subfield] = { value: ex.value, confidence: newConf, source: ex.source, lastUpdated: new Date().toISOString(), evidence: [...(fd.evidence||[]), ex.matched_pattern].slice(-5) };
+      console.log('  [提取] ' + ex.field + '.' + ex.subfield + ' conf=' + newConf.toFixed(2));
+      if (newConf < 0.5) {
+        var quiz = genQuiz(ex.field, ex.subfield);
+        if (quiz && profile.metadata.quiz_pending.indexOf(quiz.payload.field) === -1) {
+          await publishQuizSignal(quiz);
+          profile.metadata.quiz_pending.push(quiz.payload.field);
+          quizCount++;
+        }
+      }
     }
-    
-    updateSignalStatus(signal.id, { status: 'processed', processedBy: [...(signal.processedBy || []), 'user-context-scanner'] });
+    if (topic) {
+      var key = 'topic:'+topic.slice(0,20);
+      if (!profile.profile.preferences[key]) {
+        profile.profile.preferences[key] = { interest: signal.type==='decision'?'high':signal.type==='frustration'?'frustrated':'medium', lastSeen: new Date().toISOString(), source: signal.type };
+      }
+    }
+    profile.profile.lastUpdated = new Date().toISOString();
+    saveUserProfile(profile);
+    updateSignalStatus(signal.id, { status: 'done', processedBy: [...(signal.processedBy || []), 'user-context-scanner'] });
     processed++;
   }
-  
-  return { processed };
+  console.log('[user-context-scanner] 完成: ' + processed + '信号, ' + quizCount + 'quiz');
+  return { processed, quizzes: quizCount };
 }
 
+// ===== 用户画像提取引擎 (2026-04-03) =====
+const EXTRACTION_PATTERNS = [
+  { field: 'profession', subfield: 'industry', patterns: ['电力','能源','虚拟电厂','电力交易'], confidence: 0.9 },
+  { field: 'profession', subfield: 'title', patterns: ['产品经理','PM'], confidence: 0.9 },
+  { field: 'profession', subfield: 'years_experience', patterns: ['12年'], confidence: 0.9 },
+  { field: 'profession', subfield: 'current_status', patterns: ['打工','创业'], confidence: 0.9 },
+  { field: 'habits', subfield: 'sleep_wake', patterns: ['点起床','点睡觉','点睡','点起'], confidence: 0.8 },
+  { field: 'habits', subfield: 'thinking_time', patterns: ['思考时间'], confidence: 0.8 },
+  { field: 'habits', subfield: 'exercise_freq', patterns: ['很少运动'], confidence: 0.7 },
+  { field: 'preferences', subfield: 'communication_style', patterns: ['先分析','让我定','自己决定'], confidence: 0.9 },
+  { field: 'content_patterns', subfield: 'preferred_topics', patterns: ['头条','OpenClaw','视频'], confidence: 0.8 },
+  { field: 'content_patterns', subfield: 'content_angle', patterns: ['不受欢迎','不火'], confidence: 0.8 },
+  { field: 'content_patterns', subfield: 'posting_frequency', patterns: ['一天','一篇'], confidence: 0.7 },
+  { field: 'demographics', subfield: 'family', patterns: ['老婆','兜兜','露露','儿子','女儿'], confidence: 0.9 },
+];
+const QUIZ_TEMPLATE = {
+  'emotional_patterns_triggers': { q: '你什么时候会感到特别有压力？', o: ['deadline紧','沟通没进展','系统故障','其他'], w: '不了解你的情绪触发点' },
+  'emotional_patterns_recovery_style': { q: '遇到挫折时通常怎么恢复？', o: ['睡一觉','找人聊聊','换事情做','硬扛'], w: '了解恢复方式可更好安排主动触发' },
+  'habits_exercise_freq': { q: '最近一次运动是什么时候？', o: ['这周','上个月','很久没','经常运动'], w: '你说很少运动需督促' },
+};
+function updateConf(existing, newC, source) {
+  if (source === 'direct') return Math.min(0.9, Math.max(existing, newC));
+  if (source === 'behavior') return existing > 0.3 ? Math.min(0.7, existing + 0.15) : 0.4;
+  return existing;
+}
+function genQuiz(field, subfield) {
+  var key = field + '_' + subfield;
+  var t = QUIZ_TEMPLATE[key];
+  if (!t) return null;
+  return { id: 'quiz_' + Date.now(), type: 'quiz_generated', source: 'user-context-scanner', priority: 'low', status: 'pending', createdAt: new Date().toISOString(), payload: { field: key, question: t.q, options: t.o, context: t.w, confidence: 0.2 } };
+}
+async function publishQuizSignal(quiz) {
+  try {
+    var signals = [];
+    if (existsSync(PENDING_SIGNALS_FILE)) {
+      var lines = readFileSync(PENDING_SIGNALS_FILE, 'utf-8').split('\n').filter(Boolean);
+      for (var l of lines) { try { signals.push(JSON.parse(l)); } catch {} }
+    }
+    signals.push(quiz);
+    writeFileSync(PENDING_SIGNALS_FILE, signals.map(function(s){return JSON.stringify(s);}).join('\n') + '\n');
+    console.log('[quiz] 已发布: ' + quiz.payload.question.slice(0,20));
+  } catch(e) { console.error('[quiz] 失败:', e.message); }
+}
+function extractFromSignal(signal) {
+  var results = [];
+  var text = (signal.payload && (signal.payload.topic || signal.payload.text || signal.payload.event || '')) + '';
+  if (!text) return results;
+  for (var p of EXTRACTION_PATTERNS) {
+    var matched = p.patterns.some(function(pp){ return text.toLowerCase().includes(pp.toLowerCase()); });
+    if (matched) {
+      results.push({ field: p.field, subfield: p.subfield, value: text.slice(0,80), confidence: p.confidence, source: 'signal:' + signal.type, matched_pattern: p.patterns.find(function(pp){ return text.toLowerCase().includes(pp.toLowerCase()); }) });
+    }
+  }
+  return results;
+}
 // 默认配置
 const DEFAULT_CONFIG = {
   scanIntervalHours: 24,
