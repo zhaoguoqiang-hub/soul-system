@@ -52,6 +52,11 @@
 |------|------|------|
 | 任务闭环 | 所有任务必须有最终回复 | 长期 |
 | 灵魂记录克制 | 只记录 importance ≥ 0.7 | 长期 |
+| Signal系统状态跟踪 | processing状态不会被consumer跳过，统一done/ignored两态 | 2026-04-03 |
+| Context Compression触发条件 | proactive-engine发context_compression信号 → narrative-memory消费写入 | 2026-04-03 |
+| Predictive Trigger模式 | 基于已知模式预测下一步，置信度=基准×情绪权重×时间权重 | 2026-04-03 |
+| Skill目录结构 | 灵魂5个skill放workspace/skills，工具skill放~/.openclaw/skills/ | 2026-04-03 |
+| Soul-system打包原则 | proactive-engine插件是引擎，5个skill是模块，必须打包发布才有效 | 2026-04-03 |
 
 
 ---
