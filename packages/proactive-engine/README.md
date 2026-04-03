@@ -1,55 +1,75 @@
 # Proactive Engine
 
-`soul-system` 的心跳引擎 —— 周期性检查上下文，主动写入记忆。
+Soul-system 的心跳引擎 + 信号协调中心。
 
 ## 功能
 
-- **主动检查工具** `proactive_check`: 周期性检查上下文，判断是否需要写入记忆
-- **LLM输出钩子** `llm_output`: 捕获对话中的里程碑事件，自动记录
-- **记忆基础设施**: 写入 `memory/narrative.jsonl` 和 `.soul/daily_context.json`
-
-## 工作原理
-
-```
-Cron触发（每2小时）
-  → proactive_check 工具执行
-  → 分析今日上下文
-  → 写入 narrative.jsonl（重要事件）
-  → 更新 daily_context.json
-  → 向主会话汇报结果
-```
+- **llm_output hook**：自动捕获对话中的 8 类事件（breakthrough/frustration/decision/realization/feedback/question/transition/context_update）
+- **proactive_check 工具**：定时上下文检查，发布信号到协调层
+- **信号协调**：publishSignal/consumeSignal/resolveSignal 完整信号生命周期
+- **目标管理**：内置目标追踪和建议生成
+- **Context Compression**：对话≥15条时自动发布压缩信号
 
 ## 安装
 
-```bash
-openclaw plugins install @soul-system/proactive-engine
+ClawHub 自动安装，无需手动配置。
+
+## 信号类型
+
+| 类型 | 含义 | 优先级 |
+|------|------|--------|
+| breakthrough | 用户达成重要进展 | medium |
+| frustration | 用户遇到困难 | high |
+| decision | 用户做出决策 | medium |
+| realization | 用户有新认知 | medium |
+| feedback | 用户给出反馈 | medium |
+| question | 用户提出问题 | medium |
+| transition | 话题切换 | low |
+| context_update | 上下文更新 | Low |
+| context_compression | 会话压缩触发 | medium |
+| mood_state_assessed | 情绪状态评估 | low |
+
+## 依赖的 Skill
+
+需要配合以下 soul-system skill 使用才能发挥完整效果：
+
+- `value-aware-guard` — 消费 value_drift/intervention_triggered 信号
+- `mood-simulator` — 消费 frustration/feedback/breakthrough 信号
+- `narrative-memory` — 消费 breakthrough/decision/realization/context_compression 信号
+- `user-context-scanner` — 消费 context_update/decision/question 信号
+- `proactive-trigger` — 消费所有信号并评估是否主动触发
+
+## 配置
+
+```json
+{
+  "plugins": {
+    "entries": {
+      "proactive-engine": {
+        "enabled": true,
+        "config": {
+          "checkIntervalMs": 7200000
+        }
+      }
+    }
+  }
+}
 ```
 
-## 配置 Cron
+## 工作流程
 
-```bash
-# 创建每2小时执行一次的主动检查任务
-openclaw cron add \
-  --every 2h \
-  --name "proactive-check" \
-  --message "请执行 proactive_check force=true 并汇报结果" \
-  --session isolated \
-  --announce
+```
+用户对话
+  ↓ llm_output hook
+proactive-engine 捕获事件 → 发布到 signals/pending.jsonl
+  ↓
+各 skill 消费信号 → 执行各自的逻辑
+  ↓
+proactive-trigger 评估是否主动触发提示
 ```
 
-## 依赖
+## 版本
 
-需要 soul-system 的 5 个 skill（自动通过 ClawHub 安装）:
-- `@soul-system/narrative-memory` - 叙事记忆
-- `@soul-system/proactive-trigger` - 主动触发决策
-- `@soul-system/user-context-scanner` - 用户上下文扫描
-- `@soul-system/value-aware-guard` - 价值守护
-- `@soul-system/mood-simulator` - 情绪模拟
-
-## 发布历史
-
-### 0.1.0
-- 初始版本
-- proactive_check 工具
-- llm_output 里程碑捕获钩子
-- 记忆文件写入支持
+- **1.2.0**：Signal 系统全链路修复、Context Compression 自动触发、Predictive Trigger 预测性触发
+- **1.1.0**：信号协调中心 + 目标管理
+- **1.0.0**：基础心跳 + 事件捕获
