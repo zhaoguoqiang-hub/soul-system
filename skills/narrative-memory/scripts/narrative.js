@@ -47,7 +47,22 @@ function updateSignalStatus(signalId, updates) {
 async function consumeSignalsAndGenerateNarrative() {
   const signals = getPendingSignals();
   const targetTypes = ['breakthrough', 'decision', 'realization', 'frustration'];
-  const relevant = signals.filter(s => targetTypes.includes(s.type));
+  // 特殊处理：context_compression 信号触发会话压缩
+    const compressionSignal = signals.find(s => s.type === "context_compression" && !(s.processedBy || []).includes("narrative-memory"));
+    if (compressionSignal) {
+      const msgCount = compressionSignal.payload?.messageCount || 20;
+      const topic = compressionSignal.payload?.topic || "会话压缩触发";
+      console.log("[narrative-memory] 收到 context_compression 信号，写入压缩记录");
+      appendNarrative(
+        "[会话压缩] 触发压缩，当前会话约" + msgCount + "条消息，话题: " + topic,
+        "context_compression",
+        0.4,
+        ["system", "compression"]
+      );
+      updateSignalStatus(compressionSignal.id, { status: "done", processedBy: [...(compressionSignal.processedBy || []), "narrative-memory"] });
+    }
+    
+    const relevant = signals.filter(s => targetTypes.includes(s.type) && !(s.processedBy || []).includes("narrative-memory"));
   
   if (relevant.length === 0) {
     console.log('[narrative-memory] 无相关信号待处理');

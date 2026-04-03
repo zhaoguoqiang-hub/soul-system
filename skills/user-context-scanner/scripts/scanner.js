@@ -53,7 +53,7 @@ function updateSignalStatus(signalId, updates) {
 async function consumeSignalsForContext() {
   const signals = getPendingSignals();
   const targetTypes = ['context_update', 'decision', 'question'];
-  const relevant = signals.filter(s => targetTypes.includes(s.type));
+  const relevant = signals.filter(s => targetTypes.includes(s.type) && !(s.processedBy || []).includes("user-context-scanner"));
   
   if (relevant.length === 0) {
     console.log('[user-context-scanner] 无相关信号待处理');

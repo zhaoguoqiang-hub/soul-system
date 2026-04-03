@@ -339,6 +339,68 @@ function updateStateAfterTrigger(state, topic, userResponse = null) {
   return state;
 }
 
+// ===== Predictive Trigger: 预测性主动触发 =====
+function predictNextTopics(state) {
+  const predictions = [];
+  
+  // 读取最近对话上下文
+  const dailyContext = loadDailyContext();
+  const recentTopics = dailyContext.topTopics || [];
+  const recentMood = dailyContext.userMood || 'neutral';
+  
+  // 已知模式：当用户完成调研后，通常的下一步
+  const FOLLOWUP_PATTERNS = [
+    { trigger: '调研', next: '创作', confidence: 0.7, message: '调研完了，接下来是不是要开始写内容了？' },
+    { trigger: '调研', next: '发布', confidence: 0.5, message: '调研素材已齐，要不要安排发布计划？' },
+    { trigger: '分析', next: '行动', confidence: 0.6, message: '分析得差不多了，接下来怎么落地？' },
+    { trigger: '安装', next: '测试', confidence: 0.8, message: '装好了，要不要测试一下效果？' },
+    { trigger: '配置', next: '验证', confidence: 0.7, message: '配置生效了吗？我来验证一下？' },
+    { trigger: '讨论', next: '决策', confidence: 0.6, message: '讨论得差不多了，要不要拍板了？' },
+    { trigger: '收集', next: '整理', confidence: 0.7, message: '素材收集得差不多了，要整理一下吗？' },
+    { trigger: '整理', next: '输出', confidence: 0.7, message: '整理完了，接下来要输出吗？' },
+  ];
+  
+  // 扫描已知模式
+  for (const pattern of FOLLOWUP_PATTERNS) {
+    const matched = recentTopics.some(t => 
+      t.toLowerCase().includes(pattern.trigger.toLowerCase())
+    );
+    if (matched) {
+      predictions.push({
+        pattern: pattern.trigger + '→' + pattern.next,
+        confidence: pattern.confidence,
+        message: pattern.message,
+        trigger: pattern.trigger
+      });
+    }
+  }
+  
+  // 情绪调整：负面情绪时降低预测触发
+  const moodMultiplier = recentMood === 'negative' ? 0.5 : recentMood === 'positive' ? 1.2 : 1.0;
+  
+  // 时间权重：工作时间更容易触发
+  const hour = new Date().getHours();
+  const timeMultiplier = (hour >= 9 && hour <= 18) ? 1.2 : 0.8;
+  
+  // 计算调整后的置信度
+  for (const pred of predictions) {
+    pred.adjustedConfidence = pred.confidence * moodMultiplier * timeMultiplier;
+  }
+  
+  // 按置信度排序
+  predictions.sort((a, b) => b.adjustedConfidence - a.adjustedConfidence);
+  
+  return predictions.slice(0, 3); // 最多返回3个预测
+}
+
+function loadDailyContext() {
+  const dailyFile = join(SOUL_DIR, 'daily_context.json');
+  if (!existsSync(dailyFile)) return {};
+  try {
+    return JSON.parse(readFileSync(dailyFile, 'utf-8'));
+  } catch { return {}; }
+}
+
 // 主处理函数：消费并处理信号
 async function consumeAndProcessSignals() {
   console.log('开始消费信号...');
@@ -346,9 +408,17 @@ async function consumeAndProcessSignals() {
   const state = loadState();
   const signals = getPendingSignals();
   
+  // Predictive Trigger: 无信号时也做预测性评估
   if (signals.length === 0) {
     console.log('没有待处理信号');
-    return { processed: 0, triggered: 0 };
+    const predictions = predictNextTopics(state);
+    if (predictions.length > 0 && predictions[0].adjustedConfidence >= 0.7) {
+      console.log('[预测触发] 检测到高置信度预测:', predictions[0].pattern, predictions[0].adjustedConfidence.toFixed(2));
+      console.log('[预测消息]', predictions[0].message);
+    } else {
+      console.log('[预测触发] 置信度不足，跳过');
+    }
+    return { processed: 0, triggered: 0, predictions };
   }
 
   // 快速路径：如果全是低优先级信号，只更新时间窗口，不触发
@@ -357,6 +427,14 @@ async function consumeAndProcessSignals() {
   
   if (allLowPriority) {
     console.log(`全是低优先级信号(${signals.length}个)，仅更新时间窗口，不触发主动干预`);
+    // Predictive Trigger: 无高优先级信号时，也做预测性评估
+    const predictions = predictNextTopics(state);
+    if (predictions.length > 0 && predictions[0].adjustedConfidence >= 0.7) {
+      console.log(`
+[预测触发] 检测到高置信度预测: ${predictions[0].pattern} (${predictions[0].adjustedConfidence.toFixed(2)})`);
+      console.log(`预测消息: ${predictions[0].message}`);
+      // 预测触发，标记但不立即输出（需要安全检查）
+    }
     saveState(state);
     return { processed: 0, triggered: 0, mode: 'low-priority-skip' };
   }
