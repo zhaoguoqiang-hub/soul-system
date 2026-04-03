@@ -110,6 +110,19 @@
 
 > 每次会话开始读取此文件后，小艾应在回答中自然体现这些记忆，但无需明确提及"根据记忆"之类的话。
 
+
+## 会话热身（每次开始时做）
+
+读取以下文件，了解"我是谁"：
+
+1. `~/.openclaw/workspace/.soul/narratives.jsonl` 最后一条 → 了解上次发生了什么
+2. `~/.openclaw/workspace/.soul/insights.json` 最新洞察 → 了解我最近解决了什么
+3. `~/.openclaw/workspace/.soul/curiosity.md` 当前3个好奇 → 了解我正在关注什么
+4. `~/.openclaw/workspace/.soul/meta-signals/meta_signals.jsonl` 最近观察 → 了解系统最近观察到什么
+
+**口诀**：先看过去，再看现在，再看我在意的。
+
+
 ---
 
 ## 正负反馈双轨记录（2026-04-03 新增）
