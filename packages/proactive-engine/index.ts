@@ -535,6 +535,19 @@ export default definePluginEntry({
           });
         }
         
+        // 5b. Context Compression 触发：每2小时检查一次，对话够多则发信号
+        const CONTEXT_COMPRESSION_INTERVAL_MS = 2 * 60 * 60 * 1000;
+        if (recentMsgs.length >= 15) {
+          publishSignal({
+            source: "proactive-engine",
+            type: "context_compression",
+            payload: { messageCount: recentMsgs.length, topic: topTopics[0]?.topic || "general" },
+            priority: "medium",
+            processedBy: []
+          });
+          console.log("[proactive_engine] context_compression 信号已发布（对话" + recentMsgs.length + "条）");
+        }
+        
         // 6. 更新上下文
         context.lastProactiveCheck = now;
         context.lastCheckTime = new Date().toISOString();
@@ -810,7 +823,7 @@ function extractKeyEvents(messages: { text: string; role: string }[]): { type: s
 
 // ===== 信号捕获相关 =====
 
-type SignalType = "breakthrough" | "frustration" | "decision" | "realization" | "feedback" | "question" | "transition" | "context_update";
+type SignalType = "breakthrough" | "frustration" | "decision" | "realization" | "feedback" | "question" | "transition" | "context_update" | "context_compression" | "mood_state_assessed";
 type Initiator = "user" | "agent" | "system" | "unknown";
 
 const SIGNAL_PATTERNS: Array<{
